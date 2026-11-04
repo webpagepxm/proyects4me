@@ -1,76 +1,10 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#151321"><title>Projects4Me · Mi tablero</title><style>
-:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#151321;color:#f6f3ff}*{box-sizing:border-box}body{margin:0}main{max-width:920px;margin:auto;padding:24px 16px 90px}h1{font-size:clamp(34px,7vw,52px);margin:9px 0}h2{font-size:21px}h3{font-size:17px;margin:0 0 7px}.muted{color:#b0a9c4;line-height:1.5}.kicker{font-size:12px;letter-spacing:.16em;color:#ad91ff;font-weight:700}.nav{display:flex;gap:8px;overflow:auto;padding:15px 0;position:sticky;top:0;background:#151321ed;z-index:2}.nav button,.action{background:#2a253a;border:1px solid #4c4263;color:#eee7ff;padding:11px 15px;border-radius:12px;font:inherit;white-space:nowrap}.nav .active,.action.primary{background:#815de2;color:white;border-color:#815de2}.panel{display:none}.panel.active{display:block}.card{background:#211d30;border:1px solid #3e3651;border-radius:20px;padding:19px;margin-bottom:13px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.number{font-size:30px;font-weight:800;margin:8px 0}.small{font-size:12px;color:#a99fc0}.task{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-bottom:1px solid #393149;line-height:1.45}.task:last-child{border:0}.task input{width:20px;height:20px;accent-color:#9b77ff;flex-shrink:0}.done span{text-decoration:line-through;color:#9389a7}.progress{height:7px;border-radius:10px;background:#40364e;margin:13px 0;overflow:hidden}.progress div{height:100%;background:#a889ff}.status{font-size:12px;color:#bda9f3;margin:0 0 13px}.note{width:100%;min-height:130px;background:#171324;border:1px solid #584b70;border-radius:12px;padding:13px;color:white;font:inherit}.row{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}.callout{background:#30253f;border-left:3px solid #9b77ff;padding:14px;border-radius:9px;line-height:1.5}.footer{font-size:12px;color:#938ba6;line-height:1.6;margin-top:32px}@media(max-width:650px){.grid{grid-template-columns:repeat(2,1fr)}.card{padding:16px}.number{font-size:26px}}@media(max-width:380px){.grid{grid-template-columns:1fr}}
-</style><style>
-.overview{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}.metric{padding:15px;background:#2a223b;border:1px solid #51426a;border-radius:15px}.metric b{display:block;font-size:26px;margin-top:5px}.field{width:100%;padding:13px;background:#171324;border:1px solid #584b70;border-radius:12px;color:white;font:inherit;margin:6px 0 10px}.subtle{font-size:12px;color:#bbaee0}.goal{border-bottom:1px solid #3e3651;padding:10px 0}.goal:last-child{border:0}.goal label{display:flex;align-items:center;gap:9px}.goal input[type=checkbox]{accent-color:#9b77ff;width:18px;height:18px}.goal input[type=range]{width:100%;accent-color:#9b77ff}.tiny{font-size:11px;color:#aa9cbf}.toolbar{display:flex;gap:8px;flex-wrap:wrap}.toolbar button{padding:9px 12px}.summarybox{background:#181425;border:1px solid #504260;border-radius:14px;padding:15px;line-height:1.6}@media(max-width:480px){.overview{grid-template-columns:repeat(2,1fr)}.metric b{font-size:22px}}
-</style></head><body><main><div class="kicker">PROJECTS4ME · PERSONAL</div><h1>Tu vida, en claro<span style="color:#a889ff">.</span></h1><p class="muted">Tres prioridades al día. Proyectos, hábitos y pendientes sin complicaciones.</p><nav id="nav" class="nav"></nav><div id="app"></div><section class="card" id="my-progress"><h2>Tu progreso real</h2><p class="muted">Los checks registran tareas terminadas. Ajusta por separado el avance general de cada proyecto: no son lo mismo.</p><div id="progress-overview" class="overview"></div><h3>Avance de proyectos</h3><div id="progress-sliders"></div></section>
-<section class="card" id="my-plan"><h2>Mis 3 prioridades de hoy</h2><p class="muted">Escribe lo que realmente vas a hacer. Puedes cambiarlo cada día.</p><div id="daily-priorities"></div><div class="toolbar"><button id="new-day">Comenzar otro día</button></div></section>
-<section class="card" id="my-extra"><h2>Pendientes que van surgiendo</h2><p class="muted">Agrega tareas propias sin modificar el código.</p><input class="field" id="custom-task" placeholder="Ej. revisar pagos o terminar una pantalla"><div class="toolbar"><button id="add-task">Agregar pendiente</button></div><div id="custom-tasks"></div></section>
-<section class="card" id="my-week"><h2>Balance de la semana</h2><p class="muted">Tu semana no es solo trabajo: también cuenta escribir, descansar y entrenar.</p><div id="weekly-balance"></div></section>
-<section class="card" id="my-backup"><h2>Guardar mis avances</h2><p class="muted">El navegador guarda tus cambios solo en este dispositivo. Exporta una copia para conservarlos o pasarlos al Mac.</p><div class="toolbar"><button id="export-data">Exportar respaldo</button><button id="import-data">Importar respaldo</button><input id="import-file" type="file" accept="application/json" style="display:none"></div></section><p class="footer">Los checks y notas se guardan solo en este navegador, sin sincronización entre dispositivos. No introduzcas datos sensibles. Los porcentajes reflejan checks completados, no progreso técnico verificado.</p></main><script>
-const groups=[
-{id:"backstage",name:"Backstage",status:"Entrega prioritaria · avance estimado por ti: 25–50%",tasks:["Revisar creación y edición de eventos","Probar recurrencias y excepciones","Verificar ingresos, gastos y fechas","Probar eliminación de registros y exportación CSV","Pulir interfaz móvil","Probar en iPhone y computadora","Auditar permisos y protección de datos","Validar versión estable con Denise"]},
-{id:"torre",name:"Torre Fuerte",status:"Entrega prioritaria · objetivo: esta semana",tasks:["Definir flujo de órdenes","Registrar clientes por formulario y manualmente","Mostrar estado y fecha de reparación","Preparar enlace de seguimiento por WhatsApp","Probar flujo completo en Android","Evaluar impresora térmica","Revisar seguridad de clientes y órdenes"]},
-{id:"sommo",name:"SOMMO",status:"Trabajo e ingresos · turno declarado 16:00–23:00",tasks:["Estudiar ingredientes 40 minutos","Repasar bebidas 40 minutos","Practicar examen del menú","Programar siguiente sesión"]},
-{id:"callejero",name:"Callejero PXM",status:"Empezar después de Backstage",tasks:["Definir registro de asistencia","Definir métricas de ventas","Diseñar acceso RP a sus propios leads","Planear QR y registro manual","Planear integración futura con Backstage"]},
-{id:"agencia",name:"Agencia",status:"Después de Torre Fuerte",tasks:["Organizar portafolio real","Definir oferta de landings y ecosistemas","Preparar pilotos","Separar instalación y soporte","Definir seguridad por cliente"]},
-{id:"slider",name:"Slider Bros",status:"En pausa este mes",tasks:[]},
-{id:"writing",name:"Escritura",status:"3 sesiones semanales de 30 minutos · primera crónica",tasks:["Escribir sesión 1","Escribir sesión 2","Escribir sesión 3"]},
-{id:"exercise",name:"Ejercicio",status:"4 sesiones de 30 minutos · correr y burpees",tasks:["Entrenar 1","Entrenar 2","Entrenar 3","Entrenar 4"]},
-{id:"food",name:"Alimentación",status:"Despensa semanal $300–500 · sin cocina",tasks:["Planear compra","Comprar proteína, frutas y verduras","Preparar opciones prácticas"]},
-{id:"money",name:"Finanzas",status:"Renta y deudas primero · presupuesto de 7 días",tasks:["Revisar pagos próximos","Preparar presupuesto semanal","Registrar gastos sin datos sensibles"]},
-{id:"study",name:"Estudios",status:"TripleTen y SOMMO",tasks:["Definir siguiente actividad de TripleTen","Completar sesión de estudio"]},
-{id:"rest",name:"Vida y descanso",status:"7–8 horas de sueño · una hora de descanso",tasks:["Contactar a familiar o amistad","Hacer limpieza breve","Leer o ir a la playa","Reservar tiempo de descanso"]}];
-let state={};try{state=JSON.parse(localStorage.getItem("projects4me")||"{}")}catch(e){}
-const save=()=>localStorage.setItem("projects4me",JSON.stringify(state));
-const isDone=(p,i)=>!!state[p.id+":"+i];
-const pct=p=>p.tasks.length?Math.round(p.tasks.filter((_,i)=>isDone(p,i)).length/p.tasks.length*100):0;
-const checks=(p,n=p.tasks.length)=>p.tasks.slice(0,n).map((t,i)=>'<label class="task '+(isDone(p,i)?"done":"")+'"><input type="checkbox" data-p="'+p.id+'" data-i="'+i+'" '+(isDone(p,i)?"checked":"")+'><span>'+t+'</span></label>').join("");
-const card=p=>'<article class="card"><h3>'+p.name+'</h3><p class="status">'+p.status+'</p>'+(p.tasks.length?'<div class="small">Checklist: '+pct(p)+'%</div><div class="progress"><div style="width:'+pct(p)+'%"></div></div>'+checks(p):'<p class="muted">Sin tareas activas.</p>')+'</article>';
-const tabs=["Hoy","Semana","Proyectos","Vida personal","Revisión"];
-let current=0;
-function render(){const done=groups.reduce((n,p)=>n+p.tasks.filter((_,i)=>isDone(p,i)).length,0),total=groups.reduce((n,p)=>n+p.tasks.length,0);
-document.getElementById("nav").innerHTML=tabs.map((t,i)=>'<button data-tab="'+i+'" class="'+(i===current?"active":"")+'">'+t+'</button>').join("");
-document.getElementById("app").innerHTML=[
-'<section class="panel"><div class="grid"><div class="card"><div class="small">Prioridades</div><div class="number">3</div></div><div class="card"><div class="small">Completadas</div><div class="number">'+done+'/'+total+'</div></div><div class="card"><div class="small">Foco</div><div class="number">Hoy</div></div></div><h2>Tu enfoque</h2><p class="muted">Propuesta inicial. Ajusta tu agenda según tus turnos.</p><div class="card"><h3>Backstage</h3>'+checks(groups[0],2)+'</div><div class="card"><h3>Torre Fuerte</h3>'+checks(groups[1],1)+'</div><div class="card"><h3>SOMMO</h3>'+checks(groups[2],2)+'</div></section>',
-'<section class="panel"><h2>Esta semana</h2><p class="muted">Entregables y hábitos. Revisión los domingos.</p>'+[groups[0],groups[1],groups[2],groups[6],groups[7],groups[8]].map(card).join("")+'</section>',
-'<section class="panel"><h2>Proyectos</h2><p class="muted">Backstage y Torre Fuerte tienen la misma prioridad. Callejero y agencia después. Slider Bros en pausa.</p>'+groups.slice(0,6).map(card).join("")+'</section>',
-'<section class="panel"><h2>Vida personal</h2>'+groups.slice(6).map(card).join("")+'</section>',
-'<section class="panel"><h2>Revisión</h2><div class="card"><h3>Tu sistema</h3><p class="muted">3 prioridades diarias · bloques de 15 o 60 minutos · revisión dominical · metas cada 15 días · preguntas de seguimiento cada 3 días.</p><p class="muted">Escritura, amistades y descanso también cuentan.</p></div><div class="card"><h3>Notas</h3><textarea id="notes" class="note" placeholder="Ideas, recordatorios o ajustes (sin datos sensibles)"></textarea><div class="row"><button class="action primary" id="copy">Copiar resumen</button><button class="action" id="reset">Reiniciar checks</button></div></div><div class="callout">Algunas preguntas del cuestionario quedaron sin responder. No completé esas respuestas con suposiciones.</div></section>'
-].join("");
-document.querySelectorAll(".panel").forEach((el,i)=>el.classList.toggle("active",i===current));
-document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{current=Number(b.dataset.tab);render()});
-document.querySelectorAll("input[data-p]").forEach(x=>x.onchange=()=>{state[x.dataset.p+":"+x.dataset.i]=x.checked;save();render()});
-const notes=document.getElementById("notes");notes.value=state.notes||"";notes.oninput=()=>{state.notes=notes.value;save()};
-document.getElementById("copy").onclick=()=>{let report=groups.map(p=>p.name+" ("+pct(p)+"%):\n"+p.tasks.map((t,i)=>(isDone(p,i)?"✓ ":"○ ")+t).join("\n")).join("\n\n");navigator.clipboard.writeText(report).then(()=>alert("Resumen copiado")).catch(()=>prompt("Copia el resumen",report))};
-document.getElementById("reset").onclick=()=>{if(confirm("¿Reiniciar los checks?")){Object.keys(state).filter(k=>k.includes(":")).forEach(k=>delete state[k]);save();render()}};
-}render();
-</script><script>
-(function(){
-const key="projects4me-extra-v1";let e={priorities:["","",""],done:[false,false,false],custom:[],advances:{backstage:25,torre:0,sommo:0,callejero:0,agencia:0},week:""};
-try{e=Object.assign(e,JSON.parse(localStorage.getItem(key)||"{}"))}catch(_){}
-const persist=()=>localStorage.setItem(key,JSON.stringify(e));
-const escapeText=x=>String(x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function paint(){
-const allTasks=groups.reduce((a,p)=>a+p.tasks.length,0),finished=groups.reduce((a,p)=>a+p.tasks.filter((_,i)=>isDone(p,i)).length,0);
-const customDone=e.custom.filter(x=>x.done).length;
-document.getElementById("progress-overview").innerHTML='<div class="metric"><span class="tiny">Tareas completadas</span><b>'+(finished+customDone)+'/'+(allTasks+e.custom.length)+'</b></div><div class="metric"><span class="tiny">Prioridades de hoy</span><b>'+e.done.filter(Boolean).length+'/3</b></div><div class="metric"><span class="tiny">Avance de Backstage</span><b>'+e.advances.backstage+'%</b></div>';
-document.getElementById("progress-sliders").innerHTML=groups.slice(0,5).map(p=>'<div class="goal"><label><strong>'+escapeText(p.name)+'</strong><span class="subtle" style="margin-left:auto">'+(e.advances[p.id]||0)+'%</span></label><input type="range" min="0" max="100" step="5" data-advance="'+p.id+'" value="'+(e.advances[p.id]||0)+'"><div class="tiny">Avance estimado por ti · checklist: '+pct(p)+'%</div></div>').join("");
-document.querySelectorAll("[data-advance]").forEach(x=>x.oninput=()=>{e.advances[x.dataset.advance]=Number(x.value);persist();paint()});
-document.getElementById("daily-priorities").innerHTML=e.priorities.map((t,i)=>'<div class="goal"><label><input type="checkbox" data-priority="'+i+'" '+(e.done[i]?"checked":"")+'><span>Prioridad '+(i+1)+'</span></label><input class="field" data-priority-text="'+i+'" placeholder="¿Qué vas a terminar?" value="'+escapeText(t)+'"></div>').join("");
-document.querySelectorAll("[data-priority]").forEach(x=>x.onchange=()=>{e.done[+x.dataset.priority]=x.checked;persist();paint()});
-document.querySelectorAll("[data-priority-text]").forEach(x=>x.oninput=()=>{e.priorities[+x.dataset.priorityText]=x.value;persist()});
-document.getElementById("custom-tasks").innerHTML=e.custom.map((t,i)=>'<div class="goal"><label><input type="checkbox" data-custom="'+i+'" '+(t.done?"checked":"")+'><span style="'+(t.done?"text-decoration:line-through;opacity:.6":"")+'">'+escapeText(t.text)+'</span><button data-remove="'+i+'" style="margin-left:auto">Quitar</button></label></div>').join("");
-document.querySelectorAll("[data-custom]").forEach(x=>x.onchange=()=>{e.custom[+x.dataset.custom].done=x.checked;persist();paint()});
-document.querySelectorAll("[data-remove]").forEach(x=>x.onclick=()=>{e.custom.splice(+x.dataset.remove,1);persist();paint()});
-const week=groups.filter(p=>["backstage","torre","sommo","writing","exercise","food","rest"].includes(p.id));
-document.getElementById("weekly-balance").innerHTML=week.map(p=>'<div class="goal"><div style="display:flex;justify-content:space-between"><span>'+escapeText(p.name)+'</span><span class="subtle">'+pct(p)+'%</span></div><div class="progress"><div style="width:'+pct(p)+'%"></div></div></div>').join("");
-}
-document.getElementById("add-task").onclick=()=>{const x=document.getElementById("custom-task");if(x.value.trim()){e.custom.push({text:x.value.trim(),done:false});x.value="";persist();paint()}};
-document.getElementById("new-day").onclick=()=>{if(confirm("¿Reiniciar las tres prioridades del día?")){e.priorities=["","",""];e.done=[false,false,false];persist();paint()}};
-document.getElementById("export-data").onclick=()=>{const obj={version:1,checks:state,extra:e,exported:new Date().toISOString()};const blob=new Blob([JSON.stringify(obj,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="projects4me-respaldo.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
-document.getElementById("import-data").onclick=()=>document.getElementById("import-file").click();
-document.getElementById("import-file").onchange=async ev=>{const file=ev.target.files[0];if(!file)return;try{const obj=JSON.parse(await file.text());if(!obj||!obj.extra||!obj.checks)throw Error("Formato no válido");if(!confirm("¿Reemplazar los avances locales con el respaldo?"))return;e=obj.extra;state=obj.checks;persist();save();render();paint();alert("Respaldo importado")}catch(err){alert("No se pudo importar: "+err.message)}};
-const oldRender=render;render=function(){oldRender();paint()};paint();
-})();
-</script></body></html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hola — Projects 4 Me</title>
+  <style>body{min-height:100vh;margin:0;display:grid;place-items:center;font-family:system-ui,sans-serif;background:#141024;color:white}h1{font-size:clamp(4rem,14vw,9rem);letter-spacing:-.07em;text-shadow:0 10px 60px #9865ff66}</style>
+</head>
+<body><h1>¡Hola!</h1></body>
+</html>
