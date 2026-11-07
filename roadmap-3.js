@@ -123,8 +123,9 @@ function renderDayCoach(){
    ].filter(x=>x.end>x.start):
    now>=21*60?
    [
-     {start:now,end:Math.min(24*60,Math.max(now+20,23*60+30)),title:'Apagar pantallas y bajar estímulos',details:'Dejar redes y preparar lo de mañana'},
-     {start:Math.min(24*60,Math.max(now+20,23*60+30)),end:24*60+30,title:'Lectura y descanso',details:'15–30 minutos de lectura si te ayuda a relajarte'}
+     {start:now,end:Math.max(now,23*60+30),title:'Cerrar el día con calma',details:'Preparar mañana sin abrir pendientes nuevos'},
+     {start:Math.max(now,23*60+30),end:Math.max(now+15,23*60+45),title:'Dejar el teléfono y las redes',details:'Referencia sugerida: 23:30; si ya pasó, empieza ahora'},
+     {start:Math.max(now+15,23*60+45),end:Math.max(now+40,24*60+30),title:'Lectura y descanso',details:'Un rato tranquilo; acostarte gradualmente entre 00:00 y 01:00'}
    ].filter(x=>x.end>x.start):[];
  const title=phase==='morning'?'Primero tu rutina, después los proyectos.':
    phase==='afternoon'?'Un paso importante antes de salir.':
@@ -175,13 +176,14 @@ if(coachHost){
   else if(action==='shift-no')day.coachShift=false;
   else return;
   save();renderDayCoach();
+  if(action==='shift-yes'||action==='shift-no')renderDailyPlan();
  });
  coachHost.addEventListener('change',event=>{
   const time=event.target.closest('[data-coach-departure]');
   if(!time)return;
   if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(time.value))return;
   const day=todayCheckin();day.coachDeparture=time.value;
-  save();renderDayCoach();
+  save();renderDailyPlan();
  });
  document.addEventListener('visibilitychange',()=>{
   if(!document.hidden)renderDayCoach();
@@ -212,10 +214,18 @@ function renderDailyPlan(){
  const key=todayLocalKey(), work=priorityQueue.filter(x=>!state.checks[x[0]]).slice(0,3);
  const projectEl=document.getElementById('priorityList'),careEl=document.getElementById('careList');
  if(!projectEl||!careEl)return;
- projectEl.innerHTML=work.length?taskHTML(work[0][0],work[0][1],work[0][2])+
-  (work.length>1?'<details class="more-priorities"><summary>Otras '+(work.length-1)+' prioridades</summary>'+work.slice(1).map(x=>taskHTML(x[0],x[1],x[2])).join('')+'</details>':'')
-  :plainCare('Momento de revisar','Ya cumpliste el foco. Cuéntame qué sigue para que actualice el tablero.');
- document.getElementById('workCount').textContent=work.length?'1 principal':'Sin pendientes';
+ const minute=coachMinutes(),nightPhase=minute<360||minute>=21*60;
+ const daily=todayCheckin();
+ const departure=coachParseTime(daily.coachDeparture,15*60+30);
+ const occupied=minute>=departure&&daily.coachShift!==false;
+ const showWork=!nightPhase&&!occupied;
+ projectEl.innerHTML=!showWork?
+   plainCare(nightPhase?'La programación puede esperar a mañana':'Atiende tus compromisos primero',
+     nightPhase?'No hace falta revisar pendientes antes de dormir.':'El trabajo de programación sigue disponible en Proyectos.'):
+   work.length?taskHTML(work[0][0],work[0][1],work[0][2])+
+   (work.length>1?'<details class="more-priorities"><summary>Otras '+(work.length-1)+' prioridades</summary>'+work.slice(1).map(x=>taskHTML(x[0],x[1],x[2])).join('')+'</details>':''):
+   plainCare('Momento de revisar','Ya cumpliste el foco. Puedes revisar el siguiente hito en Proyectos.');
+ document.getElementById('workCount').textContent=!showWork?(nightPhase?'Mañana':'En pausa'):work.length?'1 principal':'Sin pendientes';
  const hour=coachMinutes(),night=hour<360||hour>=21*60;
  const care=night?
    [['read','Leer 15–30 minutos','Una forma tranquila de desconectar.'],
