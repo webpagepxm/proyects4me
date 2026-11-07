@@ -86,4 +86,19 @@ assert.deepEqual(saved().checks,{});
 updateProgress();
 assert.equal(saved().integratedDenbouProgress['calendar:0'],80,'Slider still saves after reset');
 assert.match(nodes.portfolioV2.innerHTML,/Callejero \+ Denbou/);
-console.log('ROADMAP smoke: 18 structure, render, state, reset, slider and UX checks passed.');
+async function checkBackupImport(){
+  assert.ok(nodes.importBackup,'Backup import button must exist');
+  assert.ok(nodes.backupFile,'Backup file chooser must exist');
+  assert.equal(nodes.backupFile.listeners.change?.length,1,'Exactly one backup import handler');
+  const backup={checks:{'torre-0':true},note:'Nota recuperada',daily:{},integratedDenbouProgress:{'calendar:0':45}};
+  const encoded=JSON.stringify(backup);
+  nodes.backupFile.files=[{size:encoded.length,text:async()=>encoded}];
+  await nodes.backupFile.listeners.change[0]();
+  assert.equal(saved().checks['torre-0'],true);
+  assert.equal(saved().integratedDenbouProgress['calendar:0'],45);
+  assert.equal(saved().note,'Nota recuperada');
+  updateProgress();
+  assert.equal(saved().integratedDenbouProgress['calendar:0'],80,'Imported state stays reactive');
+  console.log('ROADMAP smoke: structure, render, state, reset, slider and backup restoration passed.');
+}
+checkBackupImport().catch(e=>{console.error(e);process.exitCode=1;});
