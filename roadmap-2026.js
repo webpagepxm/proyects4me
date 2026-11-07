@@ -171,18 +171,181 @@
     else lifeHost.parentNode.insertBefore(indicatorsHost,lifeHost);
   }
 
-  function renderPortfolio() {
-    const active=projects.filter(p=>roadmap[p.id]&&roadmap[p.id].allocation);
-    const weight=active.reduce((a,p)=>a+roadmap[p.id].allocation,0);
-    const overall=weight?Math.round(active.reduce((sum,p)=>sum+roadmap[p.id].allocation*projectInfo(p).progress,0)/weight):0;
-    const parts=active.map(p=>{
-      const cfg=roadmap[p.id],info=projectInfo(p);
-      return '<div class="rv2-portfolio-row"><div><b>'+escapeText(p.name)+'</b><small>'+cfg.allocation+'% del peso</small></div><strong>'+info.progress+'%</strong></div>'+progressBar(info.progress,p.name+": entregables marcados",true);
+
+  // ROADMAP_V4_INTEGRATED · 10 etapas y 57 tareas del tablero Callejero + Denbou.
+  // Estimaciones locales, separadas de los checklists técnicos existentes.
+  const integratedStages=[
+    ["core","Denbou · Eventos y operaciones",72,17,"La estructura operativa privada de Denise.",[["Crear, abrir y editar eventos",85],["Eventos recurrentes y excepciones",85],["Tareas y responsables por evento",75],["RPs y proveedores vinculados",65],["Validación de operaciones reales",25]]],
+    ["finance","Finanzas y proveedores",58,14,"Dinero recibido, pendiente, gastos y compromisos, sin mezclar estados contables.",[["Registro de ingresos y gastos",85],["Separar por cobrar y por pagar",75],["Exportación y filtros financieros",75],["Correcciones de lógica contable",45],["Pagos y seguimiento de proveedores",50],["Conciliación y pruebas reales",15]]],
+    ["ux","Diseño y experiencia de Denbou",70,10,"Minimalismo tipo Apple Fitness: información clara, detalles progresivos y pocas decisiones.",[["Identidad visual Denbou 2.0",85],["Inicio tranquilo con tres prioridades",90],["Gráficas y resúmenes comprensibles",80],["Consistencia móvil y escritorio",65],["Prueba guiada con Denise",15]]],
+    ["calendar","Agenda, reuniones y logística",25,11,"La agenda operativa de Denise, especialmente reuniones, acuerdos y vencimientos.",[["Agenda de eventos y pendientes",65],["Registro y programación de reuniones",20],["Responsables, hitos y acuerdos",15],["Detección de horarios superpuestos",0],["Recordatorios oportunos",0],["Briefing diario inteligente",0]]],
+    ["landing","Callejero · Landing y Guest List",30,12,"Puerta de entrada para turistas y asistentes, con identidad de Callejero.",[["Identidad visual pública",85],["Landing responsive de Callejero",75],["Formulario conectado a registros reales",0],["Consentimiento y preferencias de asistentes",20],["Integración con base de datos",0],["Pruebas completas de registro",0]]],
+    ["rp","Promotores, QRs y CRM de asistentes",8,12,"Atribución por RP sin reemplazar la venta presencial.",[["Modelo de RPs y sus registros",35],["QR único por RP",5],["Permisos para consultar leads propios",0],["Check-in y validación de asistencia",0],["CRM e historial consentido",0],["Comisiones y ventas verificadas",0]]],
+    ["integrate","Integración Callejero ↔ Denbou",0,8,"Captación pública y operaciones privadas conectadas según consentimiento y propiedad de datos.",[["Vincular registros con eventos",0],["Relacionar leads con su RP",0],["Mostrar resultados por evento",0],["Segmentar intereses y estadía",0],["Probar accesos por organizador",0]]],
+    ["ai","Asistente de inteligencia artificial",30,7,"IA para consultar, preparar acciones y disminuir carga mental sin inventar datos.",[["Interfaz de asistente privado",60],["Integración técnica de Groq",55],["Consultas seguras a datos operativos",35],["Preparación de reuniones y acuerdos",0],["Acciones escritas con autorización",0],["Memoria documental RAG",0]]],
+    ["whatsapp","WhatsApp, voz y automatizaciones",0,6,"WhatsApp como interfaz futura y Denbou como centro de información.",[["WhatsApp Cloud API con número de prueba",0],["Webhook y verificación de mensajes",0],["Transcripción de notas de voz",0],["Crear tareas y citas desde mensajes autorizados",0],["Recordatorios y resumen diario",0],["Automatizaciones con n8n",0]]],
+    ["security","Seguridad, pruebas y entrega",45,3,"Proteger datos y comprobar uso completo desde iPhone.",[["Autenticación y estructura de permisos",65],["Pruebas automáticas y compilación",70],["Regresión de operaciones y finanzas",50],["Pruebas en iPhone físico",10],["Piloto real con Denise y RPs",0]]]
+  ].map(([id,name,p,w,desc,tasks])=>({id,name,p,w,desc,tasks}));
+  if(!state.integratedDenbouProgress||typeof state.integratedDenbouProgress!=="object"||Array.isArray(state.integratedDenbouProgress))state.integratedDenbouProgress={};
+  const integratedEdits=state.integratedDenbouProgress;
+  const clampIntegrated=n=>Math.max(0,Math.min(100,Number.isFinite(+n)?Math.round(+n):0));
+  const taskIntegrated=(stage,i)=>clampIntegrated(Object.prototype.hasOwnProperty.call(integratedEdits,stage.id+":"+i)?integratedEdits[stage.id+":"+i]:stage.tasks[i][1]);
+  function integratedStageProgress(stage){
+    const base=stage.tasks.reduce((n,t)=>n+t[1],0)/stage.tasks.length;
+    const current=stage.tasks.reduce((n,t,i)=>n+taskIntegrated(stage,i),0)/stage.tasks.length;
+    if(current<=base)return clampIntegrated(base?stage.p*current/base:current);
+    return clampIntegrated(base>=100?100:stage.p+(100-stage.p)*(current-base)/(100-base));
+  }
+  const integratedOverall=()=>Math.round(integratedStages.reduce((n,s)=>n+s.w*integratedStageProgress(s),0)/100);
+  function renderOldChecklist(p){
+    const cfg=roadmap[p.id],info=projectInfo(p);
+    return '<details class="rv3-old-project"><summary>'+escapeText(p.name)+' · '+info.progress+'% de checklist técnico</summary>'+
+      '<div class="rv2-stage-grid">'+cfg.phases.map(step=>{
+        const stat=stageInfo(p,step);
+        return '<details class="rv2-stage"><summary><span><b>'+escapeText(step.name)+'</b><small>'+
+          stat.completed+'/'+stat.items.length+' marcados</small></span><strong>'+stat.progress+'%</strong></summary>'+
+          progressBar(stat.progress,p.name+": "+step.name,true)+
+          '<div class="rv2-stage-tasks">'+stat.items.map(t=>taskHTML(t.id,t.title,t.context)).join("")+'</div></details>';
+      }).join("")+'</div></details>';
+  }
+  function renderIntegratedProject(term){
+    const title="Callejero + Denbou",text=(title+" "+integratedStages.map(s=>s.name+" "+s.desc+" "+s.tasks.map(t=>t[0]).join(" ")).join(" ")).toLocaleLowerCase("es-MX");
+    const old=projects.filter(p=>p.id==="backstage"||p.id==="callejero");
+    const oldText=old.map(p=>p.name+" "+roadmap[p.id].phases.map(step=>step.name+" "+getItems(p,step).map(t=>t.title).join(" ")).join(" ")).join(" ").toLocaleLowerCase("es-MX");
+    if(term&&!text.includes(term)&&!oldText.includes(term))return "";
+    const broad=!term||title.toLocaleLowerCase("es-MX").includes(term);
+    const matches=integratedStages.filter(s=>broad||(s.name+" "+s.desc+" "+s.tasks.map(t=>t[0]).join(" ")).toLocaleLowerCase("es-MX").includes(term));
+    const stages=(matches.length?matches:integratedStages).map(s=>{
+      const value=integratedStageProgress(s);
+      const candidates=s.tasks.map((t,i)=>({t,i})).filter(({t})=>broad||(s.name+" "+s.desc+" "+t[0]).toLocaleLowerCase("es-MX").includes(term));
+      const shown=candidates.length?candidates:s.tasks.map((t,i)=>({t,i}));
+      const tasks=shown.map(({t,i})=>{
+        const v=taskIntegrated(s,i),id="rgi-"+s.id+"-"+i;
+        return '<div class="rv3-roadmap-task"><div class="rv3-roadmap-task-row"><label for="'+id+'">'+escapeText(t[0])+'</label>'+
+          '<strong data-merged-task-pct>'+v+'%</strong></div><input id="'+id+'" type="range" min="0" max="100" step="5" value="'+v+
+          '" data-merged-slider="'+s.id+'" data-merged-index="'+i+'" aria-label="'+escapeText("Avance estimado de "+t[0])+
+          '" style="--pct:'+v+'%"><div class="rv3-roadmap-range-caption"><span>Pendiente</span><span>Completo</span></div></div>';
+      }).join("");
+      return '<details class="rv3-roadmap-stage" '+(term||s.id==="calendar"?'open':'')+'>'+
+        '<summary><span class="rv3-roadmap-ord">'+String(integratedStages.indexOf(s)+1).padStart(2,"0")+'</span>'+
+        '<span class="rv3-roadmap-stage-name"><b>'+escapeText(s.name)+'</b><small>Peso '+s.w+'% del ecosistema</small></span>'+
+        '<strong data-merged-stage-pct="'+s.id+'">'+value+'%</strong><span class="rv3-roadmap-arrow" aria-hidden="true">⌄</span></summary>'+
+        '<div class="rv3-roadmap-stage-progress">'+progressBar(value,s.name+": avance estimado",true)+'</div>'+
+        '<div class="rv3-roadmap-stage-body"><p>'+escapeText(s.desc)+'</p>'+tasks+'</div></details>';
     }).join("");
-    portfolioHost.innerHTML='<div class="rv2-portfolio-head"><div><div class="eyebrow">PANORAMA GENERAL</div><h3>Portafolio activo</h3><p>Avance orientativo según lo documentado: Denbou parte de la estimación técnica; los demás muestran decisiones definidas y pendientes verificados. No equivale a producción.</p></div><div class="rv2-global"><strong>'+overall+'%</strong><small>orientativo</small></div></div>'+progressBar(overall,"Avance orientativo del portafolio activo",false)+'<div class="rv2-portfolio-split">'+parts+'</div><p class="rv2-footnote">Ponderación: Denbou 50%, Torre Fuerte 30%, Callejero 20%. Incluye estimaciones y acuerdos de alcance; no certifica publicaciones. Las marcas son locales a este dispositivo.</p>';
+    const p=integratedOverall();
+    return '<article class="card rv2-project rv3-roadmap-integrated" data-merged-card>'+
+      '<div class="rv2-project-head"><div><div class="eyebrow">PRIORIDAD 1 · PROYECTO INTEGRADO</div>'+
+      '<h3>Callejero + Denbou</h3><p>Captación pública y operaciones privadas: dos productos unidos por permisos, sin mezclar la propiedad de los datos.</p></div>'+
+      '<span class="rv2-percent" data-merged-total>'+p+'%</span></div>'+
+      '<div data-merged-mainbar>'+progressBar(p,"Avance estimado Callejero y Denbou",false)+'</div>'+
+      '<p class="rv3-roadmap-disclaimer">Porcentajes iniciales del tablero acordado (7 nov 2026). Son estimaciones, no pruebas de producción.</p>'+
+      '<div class="rv3-roadmap-actions"><button class="btn alt" type="button" data-merged-export>Exportar JSON</button>'+
+      '<button class="btn ghost" type="button" data-merged-import>Importar JSON</button>'+
+      '<button class="btn ghost" type="button" data-merged-reset>Restablecer estimaciones</button>'+
+      '<input type="file" accept=".json,application/json" data-merged-file hidden></div>'+
+      '<p class="rv3-roadmap-feedback" data-merged-feedback role="status">Los cambios se guardan solo en este navegador; no modifican Denbou ni Supabase.</p>'+
+      '<details class="rv3-roadmap-list" open><summary>Etapas y tareas ('+integratedStages.length+')</summary>'+
+      '<div class="rv3-roadmap-stage-grid">'+stages+'</div></details>'+
+      '<details class="rv3-roadmap-old"><summary>Checklists técnicos anteriores (se conservan)</summary><p>Sus casillas y porcentajes siguen disponibles por separado.</p>'+
+      old.map(renderOldChecklist).join("")+'</details></article>';
+  }
+  function refreshMerged(){
+    const card=projectHost.querySelector("[data-merged-card]");
+    if(card){
+      const value=integratedOverall();
+      card.querySelector("[data-merged-total]").textContent=value+"%";
+      const overallTrack=card.querySelector("[data-merged-mainbar] .rv2-bar");
+      if(overallTrack){overallTrack.setAttribute("aria-valuenow",String(value));overallTrack.querySelector("span").style.width=value+"%";}
+      integratedStages.forEach(stage=>{
+        const item=card.querySelector('[data-merged-stage-pct="'+stage.id+'"]');
+        if(!item)return;
+        const value=integratedStageProgress(stage);
+        item.textContent=value+"%";
+        const bar=item.closest(".rv3-roadmap-stage").querySelector(".rv3-roadmap-stage-progress .rv2-bar");
+        bar.setAttribute("aria-valuenow",String(value));
+        bar.querySelector("span").style.width=value+"%";
+      });
+    }
+    const portfolio=renderPortfolio();
+    renderIndicators(portfolio);
+  }
+  function exportMerged(){
+    const data={name:"Callejero + Denbou",date:new Date().toISOString(),estimatedOverall:integratedOverall(),
+      note:"Estimaciones manuales; no certificación de implementación",
+      stages:integratedStages.map(s=>({id:s.id,name:s.name,weight:s.w,progress:integratedStageProgress(s),
+        tasks:s.tasks.map((t,i)=>({name:t[0],estimatedProgress:taskIntegrated(s,i)}))}))};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download="callejero-denbou-avance.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function importMerged(data){
+    if(!data||!Array.isArray(data.stages))throw Error("Este archivo no contiene etapas válidas.");
+    let count=0;
+    const edits={};
+    data.stages.forEach(item=>{
+      const stage=integratedStages.find(s=>s.id===item.id);
+      if(!stage||!Array.isArray(item.tasks))return;
+      item.tasks.forEach((t,i)=>{
+        if(!t||i>=stage.tasks.length||t.name!==stage.tasks[i][0]||!Number.isFinite(Number(t.estimatedProgress)))return;
+        edits[stage.id+":"+i]=clampIntegrated(t.estimatedProgress);count++;
+      });
+    });
+    if(!count)throw Error("El archivo no coincide con las tareas del proyecto.");
+    Object.assign(integratedEdits,edits);save();renderProjectsV2();
+    const feedback=projectHost.querySelector("[data-merged-feedback]");
+    if(feedback)feedback.textContent=count+" tareas importadas y guardadas en este navegador.";
+  }
+  projectHost.addEventListener("input",event=>{
+    const input=event.target.closest("[data-merged-slider]");
+    if(!input)return;
+    const stage=integratedStages.find(s=>s.id===input.dataset.mergedSlider),i=Number(input.dataset.mergedIndex);
+    if(!stage||!Number.isInteger(i)||i<0||i>=stage.tasks.length)return;
+    const v=clampIntegrated(input.value);
+    integratedEdits[stage.id+":"+i]=v;input.style.setProperty("--pct",v+"%");
+    const tag=input.closest(".rv3-roadmap-task").querySelector("[data-merged-task-pct]");
+    if(tag)tag.textContent=v+"%";
+    save();refreshMerged();
+  });
+  projectHost.addEventListener("click",event=>{
+    if(event.target.closest("[data-merged-export]"))return exportMerged();
+    if(event.target.closest("[data-merged-import]")){
+      const input=projectHost.querySelector("[data-merged-file]");
+      if(input)input.click();return;
+    }
+    if(event.target.closest("[data-merged-reset]")){
+      if(!confirm("¿Restablecer solo las estimaciones integradas? No se borrarán notas ni checklists anteriores."))return;
+      Object.keys(integratedEdits).forEach(key=>delete integratedEdits[key]);save();renderProjectsV2();
+    }
+  });
+  projectHost.addEventListener("change",async event=>{
+    const input=event.target.closest("[data-merged-file]");
+    if(!input||!input.files||!input.files[0])return;
+    try{
+      if(input.files[0].size>250000)throw Error("Archivo demasiado grande.");
+      importMerged(JSON.parse(await input.files[0].text()));
+    }catch(e){
+      const feedback=projectHost.querySelector("[data-merged-feedback]");
+      if(feedback)feedback.textContent="No se pudo importar: "+(e.message||"JSON inválido");
+    }finally{input.value="";}
+  });
+
+
+  function renderPortfolio(){
+    const torre=projects.find(x=>x.id==="torre");
+    const other=torre?projectInfo(torre).progress:0;
+    const combined=integratedOverall();
+    const overall=Math.round(combined*.70+other*.30);
+    const parts=[["Callejero + Denbou",70,combined],["Torre Fuerte",30,other]].map(([name,w,p])=>
+      '<div class="rv2-portfolio-row"><div><b>'+escapeText(name)+'</b><small>'+w+'% del peso</small></div><strong>'+p+'%</strong></div>'+
+      progressBar(p,name+": progreso orientativo",true)).join("");
+    portfolioHost.innerHTML='<div class="rv2-portfolio-head"><div><div class="eyebrow">PANORAMA GENERAL</div>'+
+      '<h3>Portafolio activo</h3><p>Callejero + Denbou es un solo proyecto integrado; Torre Fuerte sigue independiente. Los avances son estimaciones, no certificaciones.</p></div>'+
+      '<div class="rv2-global"><strong>'+overall+'%</strong><small>orientativo</small></div></div>'+
+      progressBar(overall,"Avance orientativo del portafolio",false)+
+      '<div class="rv2-portfolio-split">'+parts+'</div>'+
+      '<p class="rv2-footnote">Pesos: Callejero + Denbou 70%, Torre Fuerte 30%. Los ajustes locales no cambian las aplicaciones en producción.</p>';
     return overall;
   }
-
 
   // ROADMAP_V3_DENBOU · Tres anillos de vida sobre el plan diario.
   // El primero muestra el alcance estimado del portafolio, los otros solo acciones
@@ -271,6 +434,8 @@
     projectHost.innerHTML=projects.map(project=>{
       const cfg=roadmap[project.id];
       if(!cfg) return "";
+      if(project.id==="callejero")return "";
+      if(project.id==="backstage")return renderIntegratedProject(term);
       const info=projectInfo(project);
       const matching=cfg.phases.filter(step=>{
         const text=step.name+" "+getItems(project,step).map(x=>x.title+" "+x.context).join(" ");
