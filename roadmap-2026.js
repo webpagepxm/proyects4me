@@ -354,8 +354,8 @@
   let latestOverall = 0;
   const ringSpecs = [
     {id:"progreso",label:"Progreso",color:"#FF7590",r:102,period:"Portafolio"},
-    {id:"salud",label:"Salud",color:"#C4F54C",r:76,period:"Hoy"},
-    {id:"vinculos",label:"Vínculos",color:"#42D7ED",r:50,period:"Esta semana"}
+    {id:"salud",label:"Salud",color:"#C4F54C",r:75,period:"Hoy"},
+    {id:"vinculos",label:"Vínculos",color:"#42D7ED",r:48,period:"Esta semana"}
   ];
   const visualPercent = value => Math.max(0,Math.min(100,Math.round(Number(value)||0)));
   function kpiCheckbox(id,label,description) {
@@ -380,10 +380,14 @@
     const contactDone=connections.filter(x=>!!state.checks[x[0]]).length;
     const values=[visualPercent(globalProgress),percent(healthDone,health.length),percent(contactDone,connections.length)];
     const rings=ringSpecs.map((item,i)=>{
-      const perimeter=2*Math.PI*item.r;
-      return '<circle cx="132" cy="132" r="'+item.r+'" class="rv3-ring-track" stroke="'+item.color+'" />'+
-        '<circle cx="132" cy="132" r="'+item.r+'" class="rv3-ring-progress" stroke="'+item.color+
-        '" stroke-dasharray="'+perimeter.toFixed(2)+'" stroke-dashoffset="'+(perimeter*(1-values[i]/100)).toFixed(2)+'"/>';
+      const perimeter=2*Math.PI*item.r,grade="rm-denbou-ring-"+item.id;
+      return '<defs><linearGradient id="'+grade+'" x1="0" y1="1" x2="1" y2="0">'+
+        '<stop offset="0" stop-color="'+item.color+'"/>'+
+        '<stop offset="1" stop-color="'+item.color+'" stop-opacity=".82"/></linearGradient></defs>'+
+        '<circle cx="120" cy="120" r="'+item.r+'" class="rv3-ring-track" stroke="'+item.color+'" />'+
+        (values[i]>0?'<circle cx="120" cy="120" r="'+item.r+'" class="rv3-ring-progress" stroke="url(#'+grade+
+        ')" stroke-dasharray="'+perimeter.toFixed(2)+'" stroke-dashoffset="'+(perimeter*(1-values[i]/100)).toFixed(2)+
+        '" style="--ring-length:'+perimeter.toFixed(2)+'"/>':'');
     }).join("");
     const metrics=ringSpecs.map((item,i)=>'<button type="button" class="rv3-metric'+(selectedIndicator===item.id?' is-selected':'')+
       '" data-ring="'+item.id+'" aria-expanded="'+(selectedIndicator===item.id)+'" aria-controls="rv3-indicator-detail">'+
@@ -406,9 +410,9 @@
           '<p>Proyectos, cuidado y personas. Un vistazo, sin tener que revisar diez pantallas.</p></div>'+
           '<span class="rv3-soft-label">A tu ritmo</span></div>'+
         '<div class="rv3-life-main"><div class="rv3-rings-figure" role="img" aria-label="Progreso '+values[0]+' por ciento, salud '+values[1]+' por ciento, vínculos '+values[2]+' por ciento">'+
-          '<svg viewBox="0 0 264 264" aria-hidden="true" focusable="false">'+rings+
-            '<text x="132" y="127" text-anchor="middle" class="rv3-svg-label">HOY</text>'+
-            '<text x="132" y="146" text-anchor="middle" class="rv3-svg-sub">Tres prioridades</text>'+
+          '<svg viewBox="0 0 240 240" aria-hidden="true" focusable="false">'+rings+
+            '<text x="120" y="114" text-anchor="middle" class="rv3-svg-label">HOY</text>'+
+            '<text x="120" y="133" text-anchor="middle" class="rv3-svg-sub">Tres prioridades</text>'+
           '</svg></div>'+
           '<div class="rv3-metrics">'+metrics+'</div></div>'+
         '<div id="rv3-indicator-detail" class="rv3-indicator-detail" '+(details?'':'hidden')+'>'+details+'</div>'+
