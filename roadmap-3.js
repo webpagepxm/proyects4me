@@ -257,7 +257,8 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
     if(term&&!text.includes(term)&&!oldText.includes(term))return "";
     const broad=!term||title.toLocaleLowerCase("es-MX").includes(term);
     const matches=integratedStages.filter(s=>broad||(s.name+" "+s.desc+" "+s.tasks.map(t=>t[0]).join(" ")).toLocaleLowerCase("es-MX").includes(term));
-    const stages=(matches.length?matches:integratedStages).map(s=>{
+    const shown=(matches.length?matches:integratedStages);
+    const stageNodes=shown.map(s=>{
       const value=integratedStageProgress(s);
       const candidates=s.tasks.map((t,i)=>({t,i})).filter(({t})=>broad||(s.name+" "+s.desc+" "+t[0]).toLocaleLowerCase("es-MX").includes(term));
       const shown=candidates.length?candidates:s.tasks.map((t,i)=>({t,i}));
@@ -274,6 +275,22 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
         '<strong data-merged-stage-pct="'+s.id+'">'+value+'%</strong><span class="rv3-roadmap-arrow" aria-hidden="true"><svg class="roadmap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>'+
         '<div class="rv3-roadmap-stage-progress">'+progressBar(value,s.name+": avance estimado",true)+'</div>'+
         '<div class="rv3-roadmap-stage-body"><p>'+escapeText(s.desc)+'</p>'+tasks+'</div></details>';
+    });
+    const groups=[
+      {id:"denbou",name:"Denbou operativo",members:["core","finance","ux","security"]},
+      {id:"agenda",name:"Agenda y logística",members:["calendar"]},
+      {id:"callejero",name:"Callejero público",members:["landing","rp"]},
+      {id:"integration",name:"Integración y análisis",members:["integrate"]},
+      {id:"automation",name:"IA y automatizaciones",members:["ai","whatsapp"]}
+    ];
+    const stages=groups.map(g=>{
+      const members=g.members.map(id=>integratedStages.find(s=>s.id===id)).filter(s=>s&&shown.includes(s));
+      if(!members.length)return "";
+      const weight=members.reduce((n,s)=>n+s.w,0);
+      const value=Math.round(members.reduce((n,s)=>n+s.w*integratedStageProgress(s),0)/weight);
+      return '<details class="rv3-workstream" '+(term?'open':'')+'><summary><span>'+escapeText(g.name)+'</span><strong>'+value+'%</strong></summary>'+
+        progressBar(value,g.name+": progreso estimado",true)+
+        '<div class="rv3-workstream-detail">'+members.map(s=>stageNodes[shown.indexOf(s)]).join("")+'</div></details>';
     }).join("");
     const p=integratedOverall();
     return '<article class="card rv2-project rv3-roadmap-integrated" data-merged-card>'+
@@ -282,12 +299,12 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
       '<span class="rv2-percent" data-merged-total>'+p+'%</span></div>'+
       '<div data-merged-mainbar>'+progressBar(p,"Avance estimado Callejero y Denbou",false)+'</div>'+
       '<p class="rv3-roadmap-disclaimer">Porcentajes iniciales del tablero acordado (7 nov 2026). Son estimaciones, no pruebas de producción.</p>'+
-      '<div class="rv3-roadmap-actions"><button class="btn alt" type="button" data-merged-export>Exportar JSON</button>'+
+      '<details class="rv3-roadmap-advanced"><summary>Respaldos y ajustes avanzados</summary><div class="rv3-roadmap-actions"><button class="btn alt" type="button" data-merged-export>Exportar JSON</button>'+
       '<button class="btn ghost" type="button" data-merged-import>Importar JSON</button>'+
       '<button class="btn ghost" type="button" data-merged-reset>Restablecer estimaciones</button>'+
-      '<input type="file" accept=".json,application/json" data-merged-file hidden></div>'+
+      '<input type="file" accept=".json,application/json" data-merged-file hidden></div></details>'+
       '<p class="rv3-roadmap-feedback" data-merged-feedback role="status">Los cambios se guardan solo en este navegador; no modifican Denbou ni Supabase.</p>'+
-      '<details class="rv3-roadmap-list" open><summary>Etapas y tareas ('+integratedStages.length+')</summary>'+
+      '<details class="rv3-roadmap-list" open><summary>Áreas de trabajo (5)</summary>'+
       '<div class="rv3-roadmap-stage-grid">'+stages+'</div></details>'+
       '<details class="rv3-roadmap-old"><summary>Checklists técnicos anteriores (se conservan)</summary><p>Sus casillas y porcentajes siguen disponibles por separado.</p>'+
       old.map(renderOldChecklist).join("")+'</details></article>';
@@ -477,7 +494,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
     const term=(filter.value||"").trim().toLocaleLowerCase("es-MX");
     const overall=renderPortfolio();
     renderIndicators(overall);
-    projectHost.innerHTML=projects.map(project=>{
+    const projectCards=projects.map(project=>{
       const cfg=roadmap[project.id];
       if(!cfg) return "";
       if(project.id==="callejero")return "";
@@ -496,7 +513,11 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
       }).join("");
       const snapshot=cfg.reference==null?'':'<div class="rv2-reference"><b>'+cfg.reference+'% estimado</b> · fotografía del alcance al '+escapeText(cfg.refDate)+'. Se actualizará al completar nuevas tareas; falta validar producción.</div>';
       return '<article class="card project rv2-project"><div class="rv2-project-head"><div><div class="eyebrow">'+escapeText(cfg.priority)+' · '+escapeText(cfg.mode)+'</div><h3>'+escapeText(project.name)+'</h3><p>'+escapeText(project.description)+'</p></div><span class="rv2-percent">'+info.progress+'%</span></div>'+progressBar(info.progress,project.name+": avance orientativo",false)+'<div class="rv2-counter">'+info.completed+' de '+info.total+' entregables marcados</div>'+snapshot+'<div class="rv2-next"><strong>Próximo hito</strong><p>'+escapeText(cfg.next)+'</p><strong>Por resolver</strong><p>'+escapeText(cfg.blocker)+'</p></div><details class="rv2-stages" '+(term?'open':'')+'><summary>Ver etapas y entregables ('+cfg.phases.length+')</summary><div class="rv2-stage-grid">'+stages+'</div></details></article>';
-    }).join("");
+    });
+    const active=projectCards.filter((markup,i)=>markup&&["backstage","torre"].includes(projects[i].id));
+    const archived=projectCards.filter((markup,i)=>markup&&!["backstage","torre"].includes(projects[i].id));
+    projectHost.innerHTML=active.join("")+
+      (archived.length?'<details class="archived-projects" '+(term?'open':'')+'><summary>En espera · '+archived.length+' proyectos</summary><div class="archived-project-grid">'+archived.join("")+'</div></details>':'');
   }
 
   // La página previa guarda casillas como id-índice. Nunca cambiamos ese formato.
