@@ -148,3 +148,56 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
   .rv2-portfolio-split{gap:17px}
 }
 @media(prefers-reduced-motion:reduce){.rv3-ring-progress,.rv3-metric{transition:none}}
+
+
+/* ROADMAP_V4_INTEGRATED · Vista de diez etapas y sliders móviles, sobre Denbou 2.0 */
+.rv2-portfolio-split{grid-template-columns:repeat(2,minmax(0,1fr))}
+.rv3-roadmap-integrated{grid-column:1/-1;padding:clamp(18px,3vw,26px)!important}
+.rv3-roadmap-integrated .rv2-project-head h3{font-size:clamp(21px,3vw,28px);letter-spacing:-.05em}
+.rv3-roadmap-integrated .rv2-project-head p{max-width:700px}
+.rv3-roadmap-disclaimer,.rv3-roadmap-feedback{font-size:11px;line-height:1.6;color:var(--rd-muted,#a2aab7);margin:10px 0}
+.rv3-roadmap-actions{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0 8px}
+.rv3-roadmap-actions .btn{font-size:12px;min-height:44px}
+.rv3-roadmap-list,.rv3-roadmap-old{border-top:1px solid var(--rd-line,#343945);padding-top:13px;margin-top:16px}
+.rv3-roadmap-list>summary,.rv3-roadmap-old>summary{font-size:14px;cursor:pointer;font-weight:780;min-height:38px;color:var(--rd-text,#f3f5f9)}
+.rv3-roadmap-stage-grid{display:grid;gap:10px;padding-top:12px}
+.rv3-roadmap-stage{border:1px solid var(--rd-line,#343945);border-radius:16px;background:var(--rd-surface-soft,#232832);padding:13px}
+.rv3-roadmap-stage>summary{display:flex;align-items:center;gap:11px;list-style:none;cursor:pointer;min-height:44px}
+.rv3-roadmap-stage>summary::-webkit-details-marker{display:none}
+.rv3-roadmap-ord{width:32px;height:32px;flex:none;display:grid;place-items:center;background:#343947;border-radius:10px;font-size:11px;color:#d9dce4;font-weight:760}
+.rv3-roadmap-stage-name{display:grid;gap:3px;min-width:0;flex:1}
+.rv3-roadmap-stage-name b{font-size:13px;line-height:1.4;color:var(--rd-text,#f3f5f9)}
+.rv3-roadmap-stage-name small{font-size:10px;color:var(--rd-muted,#a2aab7)}
+.rv3-roadmap-stage>summary>strong{color:#e7d2ff;font-size:16px;font-variant-numeric:tabular-nums}
+.rv3-roadmap-arrow{font-size:20px;color:#b6a8c5;transition:transform .15s}
+.rv3-roadmap-stage[open] .rv3-roadmap-arrow{transform:rotate(180deg)}
+.rv3-roadmap-stage-progress{margin-top:8px}
+.rv3-roadmap-stage-progress .rv2-bar{height:7px}
+.rv3-roadmap-stage-body{border-top:1px solid var(--rd-line,#343945);margin-top:12px;padding-top:9px}
+.rv3-roadmap-stage-body>p{color:var(--rd-muted,#a2aab7);font-size:12px;line-height:1.55;margin:3px 0 10px}
+.rv3-roadmap-task{border-top:1px solid #383d49;padding:13px 0 9px}
+.rv3-roadmap-task:first-of-type{border-top:0}
+.rv3-roadmap-task-row{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.rv3-roadmap-task-row label{font-size:13px;line-height:1.5;flex:1;cursor:pointer}
+.rv3-roadmap-task-row strong{font-size:13px;color:#e6d2fa;font-variant-numeric:tabular-nums}
+.rv3-roadmap-task input[type="range"]{appearance:none;-webkit-appearance:none;display:block;cursor:pointer;touch-action:pan-y;width:100%;height:23px;margin:8px 0 1px;background:transparent}
+.rv3-roadmap-task input[type="range"]::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:linear-gradient(to right,#a985ef var(--pct,0%),#3f4552 var(--pct,0%))}
+.rv3-roadmap-task input[type="range"]::-moz-range-track{height:8px;border-radius:99px;background:#3f4552}
+.rv3-roadmap-task input[type="range"]::-moz-range-progress{height:8px;border-radius:99px;background:#a985ef}
+.rv3-roadmap-task input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:23px;height:23px;border-radius:50%;background:#f6f0ff;border:3px solid #a985ef;margin-top:-7px;box-shadow:0 2px 9px #0006}
+.rv3-roadmap-task input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#f6f0ff;border:3px solid #a985ef}
+.rv3-roadmap-range-caption{display:flex;justify-content:space-between;font-size:10px;color:var(--rd-muted,#a2aab7)}
+.rv3-roadmap-old>p{color:var(--rd-muted,#a2aab7);font-size:12px}
+.rv3-old-project{border:1px solid var(--rd-line,#343945);border-radius:12px;padding:12px;margin:10px 0}
+.rv3-old-project>summary{font-size:12px;cursor:pointer;color:#decdf9;font-weight:700}
+.rv3-old-project .rv2-stage-grid{padding-top:11px}
+@media(max-width:720px){
+.rv2-portfolio-split{grid-template-columns:1fr}
+.rv3-roadmap-integrated{padding:18px!important}
+.rv3-roadmap-actions{gap:7px}
+.rv3-roadmap-actions .btn{flex:1 1 calc(50% - 8px)}
+.rv3-roadmap-stage{padding:12px}
+.rv3-roadmap-stage>summary{gap:8px}
+.rv3-roadmap-stage-name b{font-size:12px}
+.rv3-roadmap-stage>summary>strong{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.rv3-roadmap-arrow{transition:none}}
