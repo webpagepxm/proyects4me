@@ -463,23 +463,23 @@
   // Próximos pasos alineados con la última auditoría y con prioridades actuales.
   if(typeof priorityQueue!=="undefined" && typeof renderDailyPlan==="function"){
     priorityQueue.splice(0,priorityQueue.length,
-      ["milestone-backstage-calidad-diff-final","Denbou · revisar el código corregido","Comprobar compatibilidad con main y permisos"],
-      ["milestone-backstage-calidad-guardar-rama","Denbou · guardar correcciones","Rama remota y respaldo antes de integrar"],
-      ["milestone-backstage-entrega-merge","Denbou · integrar y validar","Probar y publicar únicamente tras revisión"],
-      ["milestone-backstage-diseno-tres-conceptos","Denbou · prototipos de diseño","Tres direcciones visuales sin tocar producción"],
-      ["milestone-backstage-ia-groq-actual","Denbou · verificar la conexión Groq","Mantener permisos y lectura confiable"],
-      ["milestone-backstage-whatsapp-meta-test","Denbou · iniciar WhatsApp de prueba","Webhook y registro seguro, todavía no conectado"],
+      ["milestone-backstage-calidad-diff-final","Callejero + Denbou · revisar el código corregido","Comprobar compatibilidad con main y permisos"],
+      ["milestone-backstage-calidad-guardar-rama","Callejero + Denbou · guardar correcciones","Rama remota y respaldo antes de integrar"],
+      ["milestone-backstage-entrega-merge","Callejero + Denbou · integrar y validar","Probar y publicar únicamente tras revisión"],
+      ["milestone-backstage-diseno-tres-conceptos","Callejero + Denbou · prototipos de diseño","Tres direcciones visuales sin tocar producción"],
+      ["milestone-backstage-ia-groq-actual","Callejero + Denbou · verificar la conexión Groq","Mantener permisos y lectura confiable"],
+      ["milestone-backstage-whatsapp-meta-test","Callejero + Denbou · iniciar WhatsApp de prueba","Webhook y registro seguro, todavía no conectado"],
       ["milestone-torre-ordenes-flujo","Torre Fuerte · validar órdenes","Probar Android, estados y enlaces privados"],
-      ["milestone-callejero-rps-qr-piloto","Callejero · validar QR por RP","Piloto consentido y datos segmentados"]
+      ["milestone-callejero-rps-qr-piloto","Callejero + Denbou · validar QR por RP","Piloto consentido y datos segmentados"]
     );
     renderDailyPlan();
   }
   const unknowns=document.getElementById("unknowns");
   if(unknowns)unknowns.innerHTML=[
-    "Denbou: integración técnica auditada y pruebas de backend real",
-    "Denbou: rediseño UX/UI y pruebas con Safari físico",
+    "Callejero + Denbou: integración técnica auditada y pruebas de backend real",
+    "Callejero + Denbou: experiencia y pruebas con Safari físico",
     "WhatsApp y voz: diseño definido, conexión pendiente",
     "Torre Fuerte: órdenes, acceso privado y flujo Android por verificar",
-    "Callejero: atribución QR por RP y permisos por validar"
+    "Callejero + Denbou: atribución QR por RP y permisos por validar"
   ].map(s=>'<div class="checkline"><span class="pill">Pendiente</span>'+escapeText(s)+'</div>').join("");
 })();
