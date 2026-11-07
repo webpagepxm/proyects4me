@@ -165,7 +165,10 @@
     indicatorsHost=document.createElement("section");
     indicatorsHost.id="lifeIndicatorsV2";
     indicatorsHost.className="rv2-kpis";
-    lifeHost.parentNode.insertBefore(indicatorsHost,lifeHost);
+    const home=document.getElementById("hoy");
+    const overview=home&&home.querySelector(".daily-overview");
+    if(overview)overview.insertAdjacentElement("afterend",indicatorsHost);
+    else lifeHost.parentNode.insertBefore(indicatorsHost,lifeHost);
   }
 
   function renderPortfolio() {
@@ -180,21 +183,86 @@
     return overall;
   }
 
-  function renderIndicators(globalProgress) {
-    const today=typeof todayLocalKey==="function"?todayLocalKey():new Date().toISOString().slice(0,10);
-    const careKeys=["breakfast","food","move","read"];
-    const careDone=careKeys.filter(k=>!!state.checks["daily-"+today+"-"+k]).length;
-    const contactKeys=["personal-0","personal-1"];
-    const contactDone=contactKeys.filter(k=>!!state.checks[k]).length;
-    const kpis=[
-      ["Progreso",globalProgress,globalProgress+"% de avance orientativo","Proyectos activos · estudio · finanzas"],
-      ["Salud",percent(careDone,4),careDone+" de 4 acciones de cuidado hoy","Comida · movimiento · descanso · lectura"],
-      ["Vínculos",percent(contactDone,2),contactDone+" de 2 contactos marcados","Familia · amistades · conexión"]
-    ];
-    indicatorsHost.innerHTML='<div class="rv2-kpi-head"><div class="eyebrow">TRES INDICADORES</div><h3>Progreso · Salud · Vínculos</h3><p>Acciones marcadas, no diagnósticos ni valoraciones personales.</p></div><div class="rv2-kpi-grid">'+kpis.map((item,i)=>
-      '<article class="rv2-kpi-card rv2-kpi-'+i+'"><h4>'+item[0]+'</h4><strong>'+item[2]+'</strong>'+progressBar(item[1],item[0]+": acciones verificadas",true)+'<small>'+item[3]+'</small></article>'
-    ).join("")+'</div>';
+
+  // ROADMAP_V3_DENBOU · Tres anillos de vida sobre el plan diario.
+  // El primero muestra el alcance estimado del portafolio, los otros solo acciones
+  // elegidas y confirmadas. Nunca calificar el valor personal ni inferir emociones.
+  let selectedIndicator = "";
+  let latestOverall = 0;
+  const ringSpecs = [
+    {id:"progreso",label:"Progreso",color:"#ff638d",r:102,period:"Portafolio"},
+    {id:"salud",label:"Salud",color:"#b9ed6c",r:76,period:"Hoy"},
+    {id:"vinculos",label:"Vínculos",color:"#55d3eb",r:50,period:"Esta semana"}
+  ];
+  const visualPercent = value => Math.max(0,Math.min(100,Math.round(Number(value)||0)));
+  function kpiCheckbox(id,label,description) {
+    return '<label class="rv3-check"><input type="checkbox" data-task="'+id+'" '+(state.checks[id]?'checked':'')+
+      '><span><b>'+escapeText(label)+'</b><small>'+escapeText(description)+'</small></span></label>';
   }
+  function renderIndicators(globalProgress) {
+    latestOverall=globalProgress;
+    const today=typeof todayLocalKey==="function"?todayLocalKey():new Date().toISOString().slice(0,10);
+    const week=typeof weekMondayKey==="function"?weekMondayKey():today;
+    const health=[
+      ["daily-"+today+"-food","Comí y atendí mi alimentación","Cuenta lo que pudiste resolver, sin perfeccionismo"],
+      ["daily-"+today+"-move","Moví mi cuerpo","Caminar, correr o hacer ejercicio a tu ritmo"],
+      ["daily-"+today+"-rest","Me di tiempo para descansar","El descanso también es una acción valiosa"]
+    ];
+    const connections=[
+      ["contact-week-"+week+"-papa","Hablé con papá","Una conversación significativa, no una cuota de mensajes"],
+      ["contact-week-"+week+"-mama","Hablé con mamá","También cuenta compartir un momento"],
+      ["contact-week-"+week+"-amigos","Conecté con una amistad","Conversación o convivencia que te importó"]
+    ];
+    const healthDone=health.filter(x=>!!state.checks[x[0]]).length;
+    const contactDone=connections.filter(x=>!!state.checks[x[0]]).length;
+    const values=[visualPercent(globalProgress),percent(healthDone,health.length),percent(contactDone,connections.length)];
+    const rings=ringSpecs.map((item,i)=>{
+      const perimeter=2*Math.PI*item.r;
+      return '<circle cx="132" cy="132" r="'+item.r+'" class="rv3-ring-track" stroke="'+item.color+'" />'+
+        '<circle cx="132" cy="132" r="'+item.r+'" class="rv3-ring-progress" stroke="'+item.color+
+        '" stroke-dasharray="'+perimeter.toFixed(2)+'" stroke-dashoffset="'+(perimeter*(1-values[i]/100)).toFixed(2)+'"/>';
+    }).join("");
+    const metrics=ringSpecs.map((item,i)=>'<button type="button" class="rv3-metric'+(selectedIndicator===item.id?' is-selected':'')+
+      '" data-ring="'+item.id+'" aria-expanded="'+(selectedIndicator===item.id)+'" aria-controls="rv3-indicator-detail">'+
+      '<span class="rv3-metric-dot" style="--ring-color:'+item.color+'"></span>'+
+      '<span class="rv3-metric-copy"><strong>'+item.label+'</strong><small>'+item.period+'</small></span>'+
+      '<span class="rv3-metric-value">'+values[i]+'%</span>'+
+      '<span class="rv3-metric-caret" aria-hidden="true">⌄</span></button>').join("");
+    let details="";
+    if(selectedIndicator==="progreso"){
+      details='<h4>Progreso de los proyectos</h4><p>Este porcentaje resume los frentes activos y sus avances documentados; no representa el éxito de tu vida, tus ingresos ni el cumplimiento de hoy.</p><button class="rv3-open-projects" type="button" data-side-nav="proyectos">Ver proyectos y etapas <span aria-hidden="true">↗</span></button>';
+    }else if(selectedIndicator==="salud"){
+      details='<h4>Cuidado personal · hoy</h4><p>Solo tres acciones sencillas. No diagnosticamos ni medimos cómo deberías sentirte.</p>'+health.map(x=>kpiCheckbox(...x)).join("");
+    }else if(selectedIndicator==="vinculos"){
+      details='<h4>Personas importantes · esta semana</h4><p>Marca únicamente los momentos reales que te hayan importado. Una relación no se reduce a un porcentaje.</p>'+connections.map(x=>kpiCheckbox(...x)).join("");
+    }
+    indicatorsHost.innerHTML=
+      '<article class="rv3-life-shell" aria-labelledby="rv3-life-title">'+
+        '<div class="rv3-life-heading"><div><span class="rv3-kicker">TU PANORAMA</span>'+
+          '<h2 id="rv3-life-title">Lo importante, en equilibrio.</h2>'+
+          '<p>Proyectos, cuidado y personas. Un vistazo, sin tener que revisar diez pantallas.</p></div>'+
+          '<span class="rv3-soft-label">A tu ritmo</span></div>'+
+        '<div class="rv3-life-main"><div class="rv3-rings-figure" role="img" aria-label="Progreso '+values[0]+' por ciento, salud '+values[1]+' por ciento, vínculos '+values[2]+' por ciento">'+
+          '<svg viewBox="0 0 264 264" aria-hidden="true" focusable="false">'+rings+
+            '<text x="132" y="127" text-anchor="middle" class="rv3-svg-label">HOY</text>'+
+            '<text x="132" y="146" text-anchor="middle" class="rv3-svg-sub">Tres prioridades</text>'+
+          '</svg></div>'+
+          '<div class="rv3-metrics">'+metrics+'</div></div>'+
+        '<div id="rv3-indicator-detail" class="rv3-indicator-detail" '+(details?'':'hidden')+'>'+details+'</div>'+
+        '<p class="rv3-ring-note">Los anillos muestran avances estimados o acciones que tú confirmas. No son una evaluación de tu bienestar ni una comparación con otras personas.</p>'+
+      '</article>';
+  }
+
+  indicatorsHost.addEventListener("click",event=>{
+    const trigger=event.target.closest("[data-ring]");
+    if(!trigger)return;
+    selectedIndicator=selectedIndicator===trigger.dataset.ring?"":trigger.dataset.ring;
+    renderIndicators(latestOverall);
+    if(selectedIndicator){
+      const active=indicatorsHost.querySelector('[data-ring="'+selectedIndicator+'"]');
+      if(active)active.focus({preventScroll:true});
+    }
+  });
 
   function renderProjectsV2() {
     const term=(filter.value||"").trim().toLocaleLowerCase("es-MX");
