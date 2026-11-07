@@ -120,17 +120,18 @@ function renderDayCoach(){
  const morning=now>=360&&now<720;
  const phase=(now<360||now>=21*60)?'night':
    now<720?'morning':now<effectiveEnd?'afternoon':'late';
- if(phase==='morning'||phase==='afternoon'){
-   if(!Number.isFinite(+day.coachOpenedAt)){
-     day.coachOpenedAt=now;
-     save();
-   }
+ if(phase==='morning'&&!Number.isFinite(+day.coachMorningOpenedAt)){
+   day.coachMorningOpenedAt=now;save();
+ }
+ if(phase==='afternoon'&&!Number.isFinite(+day.coachAfternoonOpenedAt)){
+   day.coachAfternoonOpenedAt=now;save();
  }
  const availableWork=priorityQueue.filter(x=>!state.checks[x[0]]);
  const first=availableWork[0];
  const [focus,focusNote]=coachFocus(now,phase,key,shift,first);
  const periodNames={morning:'MAÑANA',afternoon:'ANTES DE SALIR',late:'TARDE',night:'NOCHE'};
- const opening=Number.isFinite(+day.coachOpenedAt)?+day.coachOpenedAt:now;
+ const savedOpening=phase==='morning'?day.coachMorningOpenedAt:phase==='afternoon'?day.coachAfternoonOpenedAt:now;
+ const opening=Number.isFinite(+savedOpening)?+savedOpening:now;
  const start=Math.max(360,Math.min(now,opening));
  const items=phase==='morning'||phase==='afternoon'?
    coachSteps(start,effectiveEnd,phase==='morning',first?first[1]:'hacer un pequeño avance',!!state.checks['daily-'+key+'-read']):
@@ -139,11 +140,11 @@ function renderDayCoach(){
      {start:now,end:Math.min(now+30,21*60),title:shift===true?'Turno de trabajo':'Cerrar compromisos',details:shift===true?'Atiende tu turno, sin sumar tareas de programación':'Si no hay turno, puedes descansar o cerrar algo pequeño'},
      {start:Math.min(now+30,21*60),end:21*60,title:'Comida y pausa',details:'Cuida tu energía antes de la noche'}
    ].filter(x=>x.end>x.start):
-   now>=360?[]:
+   now>=21*60?
    [
      {start:now,end:Math.min(24*60,Math.max(now+20,23*60+30)),title:'Apagar pantallas y bajar estímulos',details:'Dejar redes y preparar lo de mañana'},
      {start:Math.min(24*60,Math.max(now+20,23*60+30)),end:24*60+30,title:'Lectura y descanso',details:'15–30 minutos de lectura si te ayuda a relajarte'}
-   ].filter(x=>x.end>x.start);
+   ].filter(x=>x.end>x.start):[];
  const title=phase==='morning'?'Primero tu rutina, después los proyectos.':
    phase==='afternoon'?'Un paso importante antes de salir.':
    phase==='late'?'El trabajo también tiene hora de cierre.':
@@ -188,7 +189,7 @@ if(coachHost){
   const day=todayCheckin(),action=button.dataset.coachAction;
   if(action==='woke'||action==='awake'){
    day.coachWakeAnswered=action;
-   if(action==='woke'){day.coachWakeTime=coachMinutes();day.coachOpenedAt=day.coachWakeTime;}
+   if(action==='woke'){day.coachWakeTime=coachMinutes();day.coachMorningOpenedAt=day.coachWakeTime;}
   }else if(action==='shift-yes')day.coachShift=true;
   else if(action==='shift-no')day.coachShift=false;
   else return;
