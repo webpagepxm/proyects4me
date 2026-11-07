@@ -15,4 +15,6 @@ jobs:
         with:
           node-version: '22'
       - name: Validate ROADMAP build and state
-        run: node tests/roadmap-smoke.cjs
+        run: |
+          node tests/roadmap-smoke.cjs
+          node tests/roadmap-time-aware.cjs
