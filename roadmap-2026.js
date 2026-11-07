@@ -354,7 +354,7 @@
   let latestOverall = 0;
   const ringSpecs = [
     {id:"progreso",label:"Progreso",color:"#FF7590",r:102,period:"Portafolio"},
-    {id:"salud",label:"Salud",color:"#C4F54C",r:75,period:"Hoy"},
+    {id:"salud",label:"Salud",color:"#B3FE15",r:75,period:"Hoy"},
     {id:"vinculos",label:"Vínculos",color:"#42D7ED",r:48,period:"Esta semana"}
   ];
   const visualPercent = value => Math.max(0,Math.min(100,Math.round(Number(value)||0)));
