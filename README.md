@@ -57,3 +57,21 @@ Comprueba estructura, render de proyectos, separación de evidencias, estado loc
 ## Mantenimiento
 
 Antes de cambios visuales: revisar el diseño de Denbou, evitar añadir CSS numerados o listeners duplicados, ejecutar smoke test y comprobar que las marcas previas permanecen intactas. Las barras de progreso representan acciones verificadas o estimaciones expresamente identificadas como tales.
+
+## Universo visual (noviembre 2026)
+
+La portada reúne misión, portafolio estimado y acceso directo a los seis proyectos visibles. Los objetos originales usan CSS, sin imágenes externas ni librerías 3D. Los hábitos y la guía horaria siguen en Mi vida y Más. Las etapas mantienen una lista nativa de desplegables, sin imponer dependencias nuevas. Las tareas conservan sus identificadores, los desplegables abiertos y el foco al actualizarse.
+
+La clave local, las tareas originales, los porcentajes iniciales y la fórmula del portafolio (70% integrado, 30% Torre Fuerte) se conservan. Si falla una escritura, se restaura el último estado guardado y se muestra un error; importar tampoco anuncia éxito si no se pudo guardar. La app no puede leer ni respaldar desde el entorno cloud los datos privados que ya existen en otros navegadores.
+
+No hay compilación, lint ni typecheck configurados: los archivos estáticos se sirven directamente. Validación de sintaxis: `node --check roadmap-3.js`. Desarrollo local: `python3 -m http.server 8000 --bind 127.0.0.1` desde este checkout.
+
+La prueba opcional real de navegador requiere Chromium, Playwright 1.56.1 y @axe-core/playwright 4.11.0 instalados fuera del checkout. Con el servidor activo:
+
+```bash
+NODE_PATH=/workspace/roadmap-tools/node_modules node tests/roadmap-browser.cjs
+```
+
+Comprueba navegación y foco en los seis proyectos, casillas, sliders con teclado, notas, recarga, importación, fallos de almacenamiento, fórmula ponderada, siete anchos y auditoría automatizada de accesibilidad de seis vistas expandidas. Usa datos sintéticos en un perfil temporal. No sustituye pruebas en Safari o un iPhone físico.
+
+Referencia anterior: `backup/pre-universe-20261107`, commit `e5095a372228bfe2d0ad4ba5efb76caf6e918bdd`. Para revertir una publicación futura, revierte el commit del rediseño mediante `git revert`; no restablezcas datos del navegador ni fuerces el historial remoto.
