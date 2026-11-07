@@ -244,3 +244,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   animation:roadmap-denbou-ring-draw 600ms cubic-bezier(.22,1,.36,1) both}
 @keyframes roadmap-denbou-ring-draw{from{stroke-dashoffset:var(--ring-length)}}
 @media(prefers-reduced-motion:reduce){.rv3-ring-progress{animation:none}}
+
+/* Consistent Denbou line chevrons and selected-day state. */
+.rv3-metric-caret{display:inline-flex;align-items:center;justify-content:center;transition:transform var(--denbou-fast) var(--denbou-ease)}
+.rv3-metric-caret .roadmap-icon{width:17px;height:17px}
+.rv3-roadmap-arrow{display:inline-flex;align-items:center;justify-content:center}
+.rv3-roadmap-arrow .roadmap-icon{width:19px;height:19px}
+.rv3-open-projects{display:inline-flex;align-items:center;gap:8px}
+.rv3-open-projects .roadmap-icon{width:17px;height:17px}
+.roadmap-more-arrow.roadmap-icon{width:21px;height:21px}
+.day[style*="background:#282F20"]{color:var(--ink);font-weight:750}
