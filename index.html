@@ -35,6 +35,7 @@ body{display:grid;grid-template-columns:214px minmax(0,1fr);min-height:100vh;bac
 .checkin-question strong{display:block;font-size:13px;margin-bottom:10px;font-weight:650}.choice-row{display:flex;gap:5px;flex-wrap:wrap}.choice-row button{border:1px solid #e5e0ea;background:#fff;color:#82778d;font-size:12px;font-weight:680;padding:9px 11px;border-radius:10px;min-height:38px}.choice-row button[aria-pressed="true"]{color:#6546bd;background:#f1eafd;border-color:#d9c8f5}.choice-row button:focus-visible,.plan-panel input:focus-visible{outline:3px solid #aa91e4;outline-offset:2px}.micro-status{font-size:12px;color:#8b8594;line-height:1.5;margin:18px 0 0}
 @media(max-width:1000px){.daily-grid{grid-template-columns:1fr}.checkin-grid{gap:13px}.checkin-heading{align-items:flex-start;flex-direction:column;gap:8px}}
 @media(max-width:720px){.daily-overview h2{font-size:27px}.daily-grid{grid-template-columns:1fr;gap:12px}.plan-panel,.checkin-panel{padding:19px}.plan-head h2{font-size:18px}.checkin-grid{grid-template-columns:1fr;gap:17px}.checkin-question{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.checkin-question strong{margin:0}.checkin-heading{flex-direction:column}.micro-status{margin-top:15px}}
+.routine-line{display:flex;gap:18px;align-items:start;padding:12px 0;border-bottom:1px solid #f1eef4}.routine-line strong{font-size:13px;min-width:145px;color:#423949}.routine-line span{font-size:13px;color:#81778a;line-height:1.45}.routine-line:last-of-type{border-bottom:0}@media(max-width:720px){.routine-line{display:block}.routine-line strong{display:block;margin-bottom:5px}}
 </style></head><body><aside class="roadmap-side">
  <div class="sidebrand"><span class="sideicon">R</span><span>ROADMAP</span></div>
  <p class="sidesub">Menos ruido. Más avance.</p>
@@ -45,9 +46,9 @@ body{display:grid;grid-template-columns:214px minmax(0,1fr);min-height:100vh;bac
   <button type="button" data-side-nav="vida"><span class="navicon">♡</span>Mi vida</button>
   <button type="button" data-side-nav="revision"><span class="navicon">◷</span>Revisión</button>
  </nav><p class="sidefoot">Un día a la vez.<br>Sin avances inventados.</p>
- </aside><main class="shell"><header class="top"><div class="brand"><span class="pixel"></span>ROADMAP<span style="font-weight:400;color:#aaa">/ personal</span></div><span class="pill" id="todayDate"></span></header><section class="hero"><div class="eyebrow">Lo importante, primero</div><h1>Lo importante,<br>hoy.</h1><p>Tus siguientes pasos, sin distracciones. Lo demás está organizado para cuando toque.</p></section><nav class="nav" id="tabs"><button class="active" data-tab="hoy">Hoy</button><button data-tab="semana">Semana</button><button data-tab="proyectos">Proyectos</button><button data-tab="vida">Vida personal</button><button data-tab="revision">Revisión</button></nav><section id="hoy">
+ </aside><main class="shell"><header class="top"><div class="brand"><span class="pixel"></span>ROADMAP<span style="font-weight:400;color:#aaa">/ personal</span></div><span class="pill" id="todayDate"></span></header><section class="hero"><div class="eyebrow">Lo importante, primero</div><h1>Tu día, con calma.</h1><p>Primero comer bien y moverte. Después avanzar en lo más importante, sin perder de vista el descanso.</p></section><nav class="nav" id="tabs"><button class="active" data-tab="hoy">Hoy</button><button data-tab="semana">Semana</button><button data-tab="proyectos">Proyectos</button><button data-tab="vida">Vida personal</button><button data-tab="revision">Revisión</button></nav><section id="hoy">
  <div class="daily-overview">
-  <div class="eyebrow">MI PLAN DE HOY</div>
+  <div class="eyebrow">MI PLAN DE HOY · TRABAJO Y VIDA</div>
   <h2 id="dayHeadline">Primero lo esencial.</h2>
   <p id="dayReason" class="muted">Tu plan se ajusta con lo que confirmes, no con suposiciones.</p>
  </div>
@@ -57,18 +58,17 @@ body{display:grid;grid-template-columns:214px minmax(0,1fr);min-height:100vh;bac
    <div id="priorityList"></div>
   </article>
   <article class="card plan-panel">
-   <div class="plan-head"><div><div class="eyebrow">TU VIDA, TAMBIÉN</div><h2>Qué necesitas hoy</h2></div><span class="plan-count">Sin culpa</span></div>
+   <div class="plan-head"><div><div class="eyebrow">BIENESTAR Y RUTINA</div><h2>Primero lo esencial</h2></div><span class="plan-count">A tu ritmo</span></div>
    <div id="careList"></div>
   </article>
  </div>
- <section class="card checkin-panel" aria-labelledby="checkinTitle">
-  <div class="checkin-heading"><div><div class="eyebrow">CHECK-IN · 20 SEGUNDOS</div><h2 id="checkinTitle">Para recomendarte mejor</h2></div><p class="muted">Responde tocando una opción.</p></div>
-  <div class="checkin-grid">
-   <div class="checkin-question"><strong>¿Ya desayunaste?</strong><div class="choice-row"><button type="button" data-checkfield="breakfast" data-checkvalue="yes">Sí</button><button type="button" data-checkfield="breakfast" data-checkvalue="no">Todavía no</button></div></div>
-   <div class="checkin-question"><strong>¿Tienes comida en casa?</strong><div class="choice-row"><button type="button" data-checkfield="pantry" data-checkvalue="yes">Sí</button><button type="button" data-checkfield="pantry" data-checkvalue="no">Necesito comprar</button></div></div>
-   <div class="checkin-question"><strong>¿Cuánta energía tienes?</strong><div class="choice-row"><button type="button" data-checkfield="energy" data-checkvalue="low">Poquita</button><button type="button" data-checkfield="energy" data-checkvalue="normal">Normal</button></div></div>
-  </div>
-  <p class="micro-status" id="priorityExplanation" role="status"></p>
+ <section class="card checkin-panel" aria-labelledby="routineTitle">
+  <div class="eyebrow">UN RITMO QUE SÍ SE PUEDA SOSTENER</div>
+  <h2 id="routineTitle" style="font-size:18px;letter-spacing:-.035em;margin:7px 0 13px">Primero tú. Después los proyectos.</h2>
+  <div class="routine-line"><strong>Al comenzar el día</strong><span>Desayunar y hacer algo de movimiento antes de abrir la computadora.</span></div>
+  <div class="routine-line"><strong>Durante el día</strong><span>Avanzar en una o dos tareas importantes y asegurar la siguiente comida.</span></div>
+  <div class="routine-line"><strong>Antes de dormir</strong><span>Leer un poco, preparar el día siguiente y desconectarte.</span></div>
+  <p class="micro-status">Si te levantaste tarde, ajustamos el plan. No necesitas compensar todas las horas perdidas.</p>
  </section>
  <div id="quickTasks" class="hidden"></div><div id="stats" class="hidden"></div>
 </section><section id="semana" class="hidden"><div class="section"><h2>Esta semana</h2><span class="pill">Plan orientativo, editable</span></div><div class="card"><div class="weekdays" id="weekDays"></div><p class="mini muted">Las actividades se distribuyen como objetivos semanales, no como compromisos en horarios que aún no conocemos.</p></div><div class="two" style="margin-top:14px"><div class="card"><h3>Metas de la semana</h3><div id="weeklyTasks"></div></div><div class="card"><h3>Agenda base</h3><div class="focus"><h3>Al despertar</h3><p>Elegir 3 prioridades y revisar trabajo</p></div><div class="focus"><h3>Mañana</h3><p>Movimiento, comida y estudio cuando se pueda</p></div><div class="focus"><h3>Mediodía / noche</h3><p>Bloques de trabajo creativo y técnico</p></div><div class="focus"><h3>Domingo</h3><p>Revisión semanal y compras</p></div></div></div></section><section id="proyectos" class="hidden"><div class="section"><h2>Proyectos y entregables</h2><input id="filter" class="input search" placeholder="Buscar tarea..."></div><div id="projects"></div></section><section id="vida" class="hidden"><div class="section"><h2>La vida también cuenta</h2><span class="pill">Hábitos sin castigo</span></div><div class="grid" id="lifeCards"></div><div class="section"><h2>Rutinas y autocuidado</h2></div><div class="card" id="lifeTasks"></div></section><section id="revision" class="hidden"><div class="section"><h2>Revisión y ajustes</h2></div><div class="two"><div class="card"><h3>Check-in diario</h3><p class="mini muted">Anota qué avanzó, qué se bloqueó y qué cambia mañana. Puedes copiar el resumen y pegarlo en ChatGPT para replanear.</p><textarea id="dailyNote" class="input textarea" placeholder="Hoy avancé... / Mañana necesito..." aria-label="Nota diaria"></textarea><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn" id="copy">Copiar reporte</button><button class="btn alt" id="export">Exportar respaldo JSON</button></div><p id="copyStatus" class="mini muted" role="status"></p></div><div class="card"><h3>Cómo trabajaremos</h3><p class="mini">Diario: tres prioridades. Cada 3 días: preguntas de seguimiento (cuando conversemos). Domingo: revisión semanal. Cada 15 días: revisar metas grandes.</p><div class="note">Este archivo guarda tus checks y notas en el navegador del dispositivo. No sincroniza automáticamente con ChatGPT ni con otros equipos.</div></div></div><div class="section"><h2>Información por confirmar</h2></div><div class="card"><p class="mini muted">No inventé respuestas a las preguntas 41, 42, 62–70, 72 y 133–140. Tampoco asumí qué funciones están probadas o terminadas.</p><div id="unknowns"></div></div><div class="section"><h2>Datos y privacidad</h2></div><div class="card"><p class="mini">Si publicas este HTML en GitHub Pages, el código y las tareas iniciales pueden ser públicos. No coloques montos privados, datos de clientes ni contraseñas en el archivo publicado. Las notas locales se quedan en este navegador, salvo que las exportes o compartas.</p><button class="btn ghost" id="reset">Borrar mis checks y notas locales</button></div></section><div class="footer">Tablero personal · Primera versión. Prioridades y preferencias tomadas de tus respuestas; avances y fechas no confirmados permanecen abiertos.</div></main><nav class="roadmap-bottom" aria-label="Navegación móvil">
@@ -109,40 +109,22 @@ function runWeeklyId(){return 'running-week-'+weekMondayKey()}
 function todayCheckin(){if(!state.daily||typeof state.daily!=='object')state.daily={};const key=todayLocalKey();if(!state.daily[key])state.daily[key]={};return state.daily[key]}
 function plainCare(title,sub){return '<div class="plan-plain"><span class="plan-symbol">·</span><span><b>'+title+'</b><small>'+sub+'</small></span></div>'}
 function renderDailyPlan(){
- const careEl=document.getElementById('careList');if(!careEl)return;
- const c=todayCheckin(), low=c.energy==='low', workCount=low?1:2;
- const work=priorityQueue.filter(x=>!state.checks[x[0]]).slice(0,workCount);
- document.getElementById('priorityList').innerHTML=work.length?work.map(x=>taskHTML(x[0],x[1],x[2])).join(''):plainCare('Cierre de bloque','Terminaste esta primera lista; comparte tu revisión para elegir los siguientes pasos.');
+ const key=todayLocalKey(), work=priorityQueue.filter(x=>!state.checks[x[0]]).slice(0,2);
+ const projectEl=document.getElementById('priorityList'),careEl=document.getElementById('careList');
+ if(!projectEl||!careEl)return;
+ projectEl.innerHTML=work.length?work.map(x=>taskHTML(x[0],x[1],x[2])).join(''):plainCare('Momento de revisar','Ya cumpliste el foco. Cuéntame qué sigue para que actualice el tablero.');
  document.getElementById('workCount').textContent=work.length===1?'1 paso':work.length+' pasos';
- const key=todayLocalKey(),care=[];
- if(c.breakfast!=='yes')care.push(plainCare('Desayunar y tomar agua',c.breakfast==='no'?'Antes de sentarte a programar.':'Si ya desayunaste, confírmalo abajo.'));
- if(c.pantry==='no'){
-  if(!state.checks['daily-'+key+'-groceries'])care.push(taskHTML('daily-'+key+'-groceries','Conseguir despensa o comida para hoy','Primero asegura tus alimentos; lo demás puede esperar.'));
- }else if(c.pantry==='yes'){
-  if(!state.checks['daily-'+key+'-meals'])care.push(taskHTML('daily-'+key+'-meals','Resolver comida y cena','Algo sencillo y suficiente; no hay que hacerlo perfecto.'));
- }else care.push(plainCare('Revisar la comida que tienes','Confirma abajo si necesitas ir al súper.'));
- if(low){
-  if(!state.checks['daily-'+key+'-walk'])care.push(taskHTML('daily-'+key+'-walk','Caminar o moverte 10–15 min','Movimiento ligero, sin forzarte.'));
- }else if(!state.checks[runWeeklyId()]){
-  care.push(taskHTML(runWeeklyId(),'Salir a correr una vez esta semana','20–30 min, o alternar trote y caminata. Puedes elegir el día.'));
- }else if(!state.checks['daily-'+key+'-movement']){
-  care.push(taskHTML('daily-'+key+'-movement','Moverte un rato','Camina 15–20 min o haz una sesión de ejercicio.'));
- }
- if(!state.checks['daily-'+key+'-reading'])care.push(taskHTML('daily-'+key+'-reading','Leer 15–20 minutos','Podremos ampliar el hábito a una hora, sin saturar el día.'));
- careEl.innerHTML=care.length?care.slice(0,4).join(''):plainCare('Ya cuidaste lo esencial','Buen momento para descansar; no necesitas llenarte de pendientes.');
- const urgent=c.pantry==='no'&& !state.checks['daily-'+key+'-groceries'];
- let headline=urgent?'Primero, consigue comida.':c.breakfast==='no'?'Primero, desayuna.':low?'Hoy vamos con calma.':'Primero lo básico.';
- let explanation=urgent?'La despensa va antes de una sesión larga de trabajo.':low?'Reducimos la carga: una tarea de proyecto y cuidados básicos.':'Avancemos en proyectos, sin dejar comida, movimiento y lectura atrás.';
- document.getElementById('dayHeadline').textContent=headline;
- document.getElementById('dayReason').textContent=explanation;
- document.getElementById('priorityExplanation').textContent='Orden local según tu check-in. No es una decisión autónoma de IA en vivo; comparte tu reporte conmigo para reajustar el plan.';
- document.querySelectorAll('[data-checkfield]').forEach(b=>b.setAttribute('aria-pressed',String(c[b.dataset.checkfield]===b.dataset.checkvalue)));
+ const care=[
+ ['breakfast','Desayunar y tomar agua','Antes de trabajar, o ahora mismo si se hizo tarde.'],
+ ['food','Resolver alimentos y despensa','Revisar qué hay y comprar comida si hace falta.'],
+ ['move','Mover el cuerpo 15–20 minutos','Caminar o ejercicio ligero. Correr una vez a la semana.'],
+ ['read','Leer al menos 15 minutos','Al final del día; creceremos hacia una hora si resulta sostenible.']
+ ];
+ const open=care.filter(([id])=>!state.checks['daily-'+key+'-'+id]);
+ careEl.innerHTML=open.length?open.map(([id,title,sub])=>taskHTML('daily-'+key+'-'+id,title,sub)).join(''):plainCare('Lo esencial está cubierto','Puedes descansar o contarme cómo fue tu día.');
+ document.getElementById('dayHeadline').textContent='Un día a la vez.';
+ document.getElementById('dayReason').textContent='Tu salud y tus proyectos tienen lugar en el mismo plan. Hoy no necesitas hacerlo todo.';
 }
-function dailyReport(){
- const c=todayCheckin();return '\n\nCHECK-IN DE HOY: desayuno='+ (c.breakfast||'sin confirmar')+', comida en casa='+(c.pantry||'sin confirmar')+', energía='+(c.energy||'sin confirmar')+'.\nMeta: correr una vez por semana, movimiento flexible y lectura breve.';
-}
-document.addEventListener('click',function(e){
- const btn=e.target.closest('[data-checkfield]');if(!btn)return;
- const c=todayCheckin();c[btn.dataset.checkfield]=btn.dataset.checkvalue;save();renderDailyPlan();
-});
+function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa, movimiento diario, lectura de 15 minutos. Meta semanal: correr una vez. Ajustar tiempos de despertar en nuestra conversación.';}
+
 </script></body></html>
