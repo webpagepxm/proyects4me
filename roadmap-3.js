@@ -109,7 +109,12 @@ function renderDayCoach(){
  }
  const availableWork=priorityQueue.filter(x=>!state.checks[x[0]]);
  const first=availableWork[0];
- const [focus,focusNote]=coachFocus(now,phase,key,shift,first);
+ const done=id=>!!state.checks['daily-'+key+'-'+id];
+ const nextCare=phase==='morning'?
+   [['teeth','Lávate los dientes'],['breakfast','Desayuna'],['move','Haz ejercicio · 30 min']].find(x=>!done(x[0])):
+   phase==='afternoon'&&now>=13*60&&!done('food')?['food','Come algo']:null;
+ const title=nextCare?nextCare[1]:phase==='night'?(now<360?'Descansa':'Deja el teléfono'):
+   phase==='late'?(shift===true?'Ve a trabajar':'Cierra tu día'):'Avanza en tu proyecto';
  const periodNames={morning:'MAÑANA',afternoon:'ANTES DE SALIR',late:'TARDE',night:'NOCHE'};
  const savedOpening=phase==='morning'?day.coachMorningOpenedAt:phase==='afternoon'?day.coachAfternoonOpenedAt:now;
  const opening=Number.isFinite(+savedOpening)?+savedOpening:now;
@@ -127,42 +132,31 @@ function renderDayCoach(){
      {start:Math.max(now,23*60+30),end:Math.max(now+15,23*60+45),title:'Dejar el teléfono y las redes',details:'Referencia sugerida: 23:30; si ya pasó, empieza ahora'},
      {start:Math.max(now+15,23*60+45),end:Math.max(now+40,24*60+30),title:'Lectura y descanso',details:'Un rato tranquilo; acostarte gradualmente entre 00:00 y 01:00'}
    ].filter(x=>x.end>x.start):[];
- const title=phase==='morning'?'Primero tu rutina, después los proyectos.':
-   phase==='afternoon'?'Un paso importante antes de salir.':
-   phase==='late'?'El trabajo también tiene hora de cierre.':
-   'Prepara una noche más tranquila.';
- const description=phase==='night'?
-  'Objetivo gradual: acostarte cerca de medianoche–1:00. Evita abrir pendientes nuevos por la noche.':
-  phase==='late'?
-  'Si tienes turno, el plan de programación puede esperar. Si no, ajusta el horario en opciones.':
-  'La propuesta parte de la hora en que abriste ROADMAP, no de una supuesta hora de despertar.';
  const rows=items.slice(0,10).map(item=>
    '<div class="coach-slot"><span class="coach-slot-time">'+coachTimeLabel(item.start,item.end)+'</span>'+
-   '<span class="coach-slot-copy"><b>'+item.title+'</b><small>'+item.details+'</small></span></div>'
+   '<span class="coach-slot-copy"><b>'+item.title+'</b></span></div>'
  ).join('');
  const wakePrompt=morning&&!day.coachWakeAnswered?
-   '<div class="coach-wake"><span>Entraste a las '+coachClock(opening)+'. ¿Acabas de despertar?</span>'+
-   '<div><button type="button" data-coach-action="woke">Sí, ahora</button>'+
-   '<button type="button" data-coach-action="awake">Ya estaba despierto</button></div></div>':
-   day.coachWakeAnswered==='woke'&&morning?
-   '<p class="coach-confirm">Despertar confirmado: '+coachClock(day.coachWakeTime??now)+'.</p>':'';
- const shiftStatus=shift===null?'Sin confirmar':shift===true?'Tengo turno hoy':'Día sin turno';
+   '<div class="coach-wake"><span>¿Acabas de despertar?</span>'+
+   '<div><button type="button" data-coach-action="woke">Sí</button>'+
+   '<button type="button" data-coach-action="awake">No</button></div></div>':'';
+ const outline=phase==='night'?'Rutina de noche':
+   phase==='late'?'Ver la tarde':'Horario hasta '+coachClock(effectiveEnd);
+ const mark=nextCare?
+   '<button type="button" class="coach-done" data-coach-action="done" data-coach-check="'+nextCare[0]+'">Hecho</button>':'';
  coachHost.innerHTML=
-   '<div class="coach-head"><span class="eyebrow">TU ESTRUCTURA · '+periodNames[phase]+'</span>'+
+   '<div class="coach-head"><span class="eyebrow">HOY · '+periodNames[phase]+'</span>'+
    '<span class="coach-clock">'+coachClock(now)+'</span></div>'+
-   '<h2>'+title+'</h2><p class="coach-caption">'+description+'</p>'+
-   '<div class="coach-next"><span>AHORA</span><strong>'+focus+'</strong><small>'+focusNote+'</small></div>'+
+   '<div class="coach-next"><span>AHORA</span><strong>'+title+'</strong>'+mark+'</div>'+
    wakePrompt+
-   '<details class="coach-schedule"><summary>Ver la estructura recomendada del día <span>('+items.length+' bloques)</span></summary>'+
-   '<div class="coach-slots">'+(rows||'<p>Lo más importante ahora es descansar.</p>')+'</div></details>'+
-   '<details class="coach-settings"><summary>Ajustar mi horario</summary>'+
-   '<div class="coach-setting-row"><label for="coachDeparture">Salida / cierre estimado</label>'+
+   '<details class="coach-schedule"><summary>'+outline+'</summary>'+
+   '<div class="coach-slots">'+(rows||'<p>Descansa.</p>')+'</div></details>'+
+   '<details class="coach-settings"><summary>Ajustar horario</summary>'+
+   '<div class="coach-setting-row"><label for="coachDeparture">Hora de salida</label>'+
    '<input id="coachDeparture" data-coach-departure type="time" value="'+coachClock(departure)+'"></div>'+
-   '<div class="coach-setting-row"><span>¿Hay turno de trabajo hoy?</span><div class="coach-shift-choices">'+
+   '<div class="coach-setting-row"><span>¿Trabajas hoy?</span><div class="coach-shift-choices">'+
    '<button type="button" data-coach-action="shift-yes" aria-pressed="'+(shift===true)+'">Sí</button>'+
-   '<button type="button" data-coach-action="shift-no" aria-pressed="'+(shift===false)+'">No</button></div></div>'+
-   '<p class="coach-hint">'+shiftStatus+'. Referencia inicial: 15:30, puedes cambiarla. No se leen tus calendarios.</p></details>'+
-   '<p class="coach-disclaimer">Recomendaciones locales por hora; no son notificaciones ni una IA conectada.</p>';
+   '<button type="button" data-coach-action="shift-no" aria-pressed="'+(shift===false)+'">No</button></div></div></details>';
 }
 if(coachHost){
  coachHost.addEventListener('click',event=>{
@@ -174,7 +168,12 @@ if(coachHost){
    if(action==='woke'){day.coachWakeTime=coachMinutes();day.coachMorningOpenedAt=day.coachWakeTime;}
   }else if(action==='shift-yes')day.coachShift=true;
   else if(action==='shift-no')day.coachShift=false;
-  else return;
+  else if(action==='done'){
+   const id=button.dataset.coachCheck;
+   if(!['teeth','breakfast','move','food'].includes(id))return;
+   state.checks['daily-'+todayLocalKey()+'-'+id]=true;
+   save();render();return;
+  }else return;
   save();renderDayCoach();
   if(action==='shift-yes'||action==='shift-no')renderDailyPlan();
  });
