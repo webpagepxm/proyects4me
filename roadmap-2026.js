@@ -353,9 +353,9 @@
   let selectedIndicator = "";
   let latestOverall = 0;
   const ringSpecs = [
-    {id:"progreso",label:"Progreso",color:"#ff638d",r:102,period:"Portafolio"},
-    {id:"salud",label:"Salud",color:"#b9ed6c",r:76,period:"Hoy"},
-    {id:"vinculos",label:"Vínculos",color:"#55d3eb",r:50,period:"Esta semana"}
+    {id:"progreso",label:"Progreso",color:"#FF7590",r:102,period:"Portafolio"},
+    {id:"salud",label:"Salud",color:"#C4F54C",r:76,period:"Hoy"},
+    {id:"vinculos",label:"Vínculos",color:"#42D7ED",r:50,period:"Esta semana"}
   ];
   const visualPercent = value => Math.max(0,Math.min(100,Math.round(Number(value)||0)));
   function kpiCheckbox(id,label,description) {
