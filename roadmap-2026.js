@@ -172,7 +172,7 @@
   }
 
 
-  // ROADMAP_V4_INTEGRATED · 10 etapas y 57 tareas del tablero Callejero + Denbou.
+  // ROADMAP_V4_INTEGRATED · 10 etapas y 56 tareas del tablero Callejero + Denbou.
   // Estimaciones locales, separadas de los checklists técnicos existentes.
   const integratedStages=[
     ["core","Denbou · Eventos y operaciones",72,17,"La estructura operativa privada de Denise.",[["Crear, abrir y editar eventos",85],["Eventos recurrentes y excepciones",85],["Tareas y responsables por evento",75],["RPs y proveedores vinculados",65],["Validación de operaciones reales",25]]],
