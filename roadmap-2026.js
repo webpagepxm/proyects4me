@@ -229,7 +229,7 @@
       return '<details class="rv3-roadmap-stage" '+(term||s.id==="calendar"?'open':'')+'>'+
         '<summary><span class="rv3-roadmap-ord">'+String(integratedStages.indexOf(s)+1).padStart(2,"0")+'</span>'+
         '<span class="rv3-roadmap-stage-name"><b>'+escapeText(s.name)+'</b><small>Peso '+s.w+'% del ecosistema</small></span>'+
-        '<strong data-merged-stage-pct="'+s.id+'">'+value+'%</strong><span class="rv3-roadmap-arrow" aria-hidden="true">⌄</span></summary>'+
+        '<strong data-merged-stage-pct="'+s.id+'">'+value+'%</strong><span class="rv3-roadmap-arrow" aria-hidden="true"><svg class="roadmap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>'+
         '<div class="rv3-roadmap-stage-progress">'+progressBar(value,s.name+": avance estimado",true)+'</div>'+
         '<div class="rv3-roadmap-stage-body"><p>'+escapeText(s.desc)+'</p>'+tasks+'</div></details>';
     }).join("");
@@ -394,10 +394,10 @@
       '<span class="rv3-metric-dot" style="--ring-color:'+item.color+'"></span>'+
       '<span class="rv3-metric-copy"><strong>'+item.label+'</strong><small>'+item.period+'</small></span>'+
       '<span class="rv3-metric-value">'+values[i]+'%</span>'+
-      '<span class="rv3-metric-caret" aria-hidden="true">⌄</span></button>').join("");
+      '<span class="rv3-metric-caret" aria-hidden="true"><svg class="roadmap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>').join("");
     let details="";
     if(selectedIndicator==="progreso"){
-      details='<h4>Progreso de los proyectos</h4><p>Este porcentaje resume los frentes activos y sus avances documentados; no representa el éxito de tu vida, tus ingresos ni el cumplimiento de hoy.</p><button class="rv3-open-projects" type="button" data-side-nav="proyectos">Ver proyectos y etapas <span aria-hidden="true">↗</span></button>';
+      details='<h4>Progreso de los proyectos</h4><p>Este porcentaje resume los frentes activos y sus avances documentados; no representa el éxito de tu vida, tus ingresos ni el cumplimiento de hoy.</p><button class="rv3-open-projects" type="button" data-side-nav="proyectos">Ver proyectos y etapas <svg class="roadmap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>';
     }else if(selectedIndicator==="salud"){
       details='<h4>Cuidado personal · hoy</h4><p>Solo tres acciones sencillas. No diagnosticamos ni medimos cómo deberías sentirte.</p>'+health.map(x=>kpiCheckbox(...x)).join("");
     }else if(selectedIndicator==="vinculos"){
