@@ -1,0 +1,195 @@
+/* ROADMAP 2026 — capas de seguimiento, sin alterar los IDs ni el almacenamiento anterior. */
+(function () {
+  "use strict";
+  if (typeof projects === "undefined" || typeof state === "undefined" || typeof taskHTML !== "function") return;
+
+  const phase = (id, name, weight, legacy, extra, reference) => ({id, name, weight, legacy, extra, reference});
+  const roadmap = {
+    backstage: {
+      priority:"Prioridad 1", mode:"Activo", next:"Conservar las correcciones, revisar compatibilidad con main y validar el despliegue antes del rediseño.",
+      blocker:"Correcciones probadas en rama aislada; integración y comprobaciones reales pendientes.",
+      reference:57, refDate:"06/11/2026", allocation:50,
+      phases:[
+        phase("arquitectura","Arquitectura y seguridad",15,[11,12],[["rls-real","Probar RLS y acceso entre organizaciones con cuentas autorizadas"],["auth-real","Verificar autenticación y permisos en entorno seguro"]],80),
+        phase("operaciones","Eventos y operaciones",15,[0,1,2,3,4,10],[["recorridos","Validar recorridos de eventos, recurrencias, tareas y equipo con servicios de prueba"]],80),
+        phase("finanzas","Finanzas",15,[5,6,7,8,9],[["fin-merge","Integrar correcciones de interpretación y contexto financiero"],["fin-backend","Comparar cifras, permisos y filtros con backend de prueba"]],85),
+        phase("calidad","Auditoría y calidad",15,[13,14],[["diff-final","Revisar diff de correcciones y compatibilidad con main"],["guardar-rama","Respaldar y conservar rama de correcciones"],["safari","Probar Safari/iPhone físico, teclado, zoom y formularios"],["regresion","Ejecutar regresión final después de integrar"]],90),
+        phase("diseno","Rediseño UX/UI",15,[],[["tres-conceptos","Crear tres direcciones estéticas realmente diferentes"],["prototipos","Preparar prototipos de Home, Eventos y Finanzas para móvil y escritorio"],["aprobar-diseno","Elegir y aprobar una propuesta visual"],["implementar-diseno","Implementar estética aprobada sin perder funcionalidad"],["qa-visual","Validar coherencia y accesibilidad en móvil y escritorio"]],20),
+        phase("ia","Asistente de IA / Groq",10,[],[["groq-actual","Verificar funcionamiento y permisos de la integración actual"],["acciones-seguras","Implementar herramientas autorizadas para leer y registrar operaciones"],["aclaraciones","Confirmar intenciones, fechas y eventos ambiguos"],["reuniones","Integrar reuniones, acuerdos, responsables y briefings"],["ia-test","Probar acciones y aislamiento de datos sin tocar producción"]],25),
+        phase("whatsapp","WhatsApp, voz y automatizaciones",10,[],[["meta-test","Conectar WhatsApp Cloud API con número de prueba"],["voz","Transcribir audio con Groq Whisper"],["webhook","Validar webhook y registro autorizado en Supabase"],["confirmacion","Preparar confirmaciones y controles contra duplicados"],["recordatorios","Construir recordatorios y seguimiento autorizado"]],0),
+        phase("entrega","Publicación y entrega",5,[15],[["merge","Integrar rama aprobada sin sobrescribir cambios recientes"],["publicar","Desplegar versión corregida y comprobarla"],["denise","Realizar prueba guiada en el teléfono de Denise"]],25)
+      ]
+    },
+    torre: {
+      priority:"Prioridad 2",mode:"Activo",next:"Cerrar una V1 de órdenes y seguimiento utilizable desde Android.",
+      blocker:"Faltan verificación real del flujo Android, controles de acceso y demostración.",
+      allocation:30,phases:[
+        phase("captacion","Presencia digital y captación",15,[2,3],[["tarjeta","Validar landing, tarjeta digital y QR"],["reviews","Conectar reseñas y acceso WhatsApp"]]),
+        phase("registros","Clientes y motos",15,[0,1],[["historial","Diseñar historial de motocicletas y servicios con permisos"]]),
+        phase("ordenes","Órdenes de servicio",20,[4,9],[["flujo","Validar diagnóstico, presupuesto, aprobación, reparación y entrega"],["estimado","Registrar fecha estimada sin inventarla"]]),
+        phase("seguimiento","Seguimiento privado",20,[5,6,10],[["link-privado","Probar enlace seguro por orden y acceso del cliente"]]),
+        phase("agenda","Agenda y WhatsApp",15,[],[["disponibilidad","Definir horarios, capacidad y prevención de choques"],["modalidad","Elegir agente que responde o agente que solo registra acuerdos"],["reservas","Probar solicitud, confirmación y registro seguro en Supabase"]]),
+        phase("seguridad","Seguridad y QA Android",10,[7,8,11],[["aislamiento","Probar que un cliente no pueda acceder a órdenes ajenas"]]),
+        phase("impresion","Impresión y entrega",5,[12,13],[["compatibilidad","Comprobar impresora térmica y Android antes de comprar"]])
+      ]
+    },
+    callejero: {
+      priority:"Prioridad alta · con Denbou",mode:"Activo",next:"Definir el piloto de registros atribuibles por RP y la conexión con Denbou.",
+      blocker:"No hay verificación de ventas, comisiones ni seguimiento automático como funciones entregadas.",
+      allocation:20,phases:[
+        phase("alcance","Alcance y consentimiento",15,[0],[["consent","Definir finalidad y consentimiento de datos por evento y organizador"]]),
+        phase("landing","Landing y registros",20,[1],[["landing-movil","Validar landing móvil y formulario real"],["preferencias","Capturar estancia, visitante/local y preferencias con propósito claro"]]),
+        phase("rps","Promotores y QR",25,[2,3],[["qr-piloto","Probar QR identificable para cada RP"],["permisos","Comprobar acceso solo a registros propios"]]),
+        phase("operacion","Operación y asistencia",15,[4,5],[["registro","Verificar check-in y conteo sin interferir con venta presencial"]]),
+        phase("analitica","Análisis",10,[6,7],[["reporte-rp","Mostrar atribución por RP sin inventar resultados de ventas"]]),
+        phase("denbou","Integración con Denbou",15,[8],[["vinculacion","Relacionar eventos y registros según permisos y titularidad"]])
+      ]
+    },
+    sommo: {
+      priority:"Trabajo y formación",mode:"Seguimiento",next:"Mantener el estudio del menú y la planificación de SOMMO Academy por separado.",
+      blocker:"Las evaluaciones reales de Academy necesitan validación independiente.",
+      phases:[
+        phase("empleo","SOMMO · estudio y servicio",55,[0,1,2,3,4,5],[["servicio","Practicar escenarios reales de atención y servicio"]]),
+        phase("academy","SOMMO Academy · evaluaciones",30,[],[["banco","Depurar banco de aproximadamente 200 preguntas"],["niveles","Validar tres niveles, intentos y límite de tiempo"],["ranking","Probar calificaciones, ranking y exportación"]]),
+        phase("checador","Checador y administración",15,[],[["qr-seguro","Verificar flujo QR sin suplantaciones"],["admin","Probar panel administrativo y permisos"]])
+      ]
+    },
+    agencia: {
+      priority:"Estrategia · después de pilotos",mode:"En espera",next:"Priorizar pruebas reales de Denbou y Torre Fuerte antes de vender ecosistemas.",
+      blocker:"No incluir pilotos no terminados como casos de éxito.",
+      phases:[
+        phase("oferta","Oferta y posicionamiento",25,[0,1,6],[["paquetes","Definir landing, sistema operativo y agente como niveles separados"]]),
+        phase("pilotos","Pilotos y portafolio",30,[3,4],[["resultados","Documentar resultados verificables de cada piloto"]]),
+        phase("seguridad","Modelo y seguridad",20,[2,5],[["aislamiento","Diseñar aislamiento de datos y permisos por cliente"]]),
+        phase("inteligencia","Dirección creativa e inteligencia comercial",15,[],[["entrevista","Diseñar entrevista adaptativa para crear perfil de marca"],["campanas","Relacionar campañas, cupones, objetivos y métricas"]]),
+        phase("plataforma","Componentes y SaaS",10,[],[["reuso","Extraer componentes reutilizables solo tras validar pilotos"]])
+      ]
+    },
+    slider: {
+      priority:"Secundario",mode:"En espera",next:"Reactivar únicamente después de las prioridades actuales.",
+      blocker:"Las alternativas a Metricool deben demostrar funcionamiento real.",
+      phases:[
+        phase("organizacion","Calendario, notas y Gantt",45,[0,2,3],[["campanas","Vista mensual con preparación de campañas con anticipación"]]),
+        phase("herramientas","Herramientas de contenido",30,[1],[["metricool","Comparar capacidad real de publicación y métricas frente a Metricool"]]),
+        phase("creatividad","Dirección creativa",15,[],[["personajes","Organizar campañas y piezas con Pelusa y Borges"]]),
+        phase("academy","Operación y capacitación",10,[],[["manual","Planear procesos y formación operativa a distancia"]])
+      ]
+    },
+    brujula: {
+      priority:"Proyecto personal independiente",mode:"En espera",next:"Mantener Brújula separado de ROADMAP y de las prioridades actuales.",
+      blocker:"No mezclar la memoria digital futura con el gestor cotidiano.",
+      phases:[
+        phase("vision","Visión y privacidad",30,[0,3],[["limites","Definir datos sensibles excluidos y consentimiento"]]),
+        phase("arquitectura","Memoria portable y permisos",30,[1,2],[["modelos","Separar datos personales, agentes de IA y permisos por proveedor"]]),
+        phase("experiencia","Reflexión y avatar",25,[4,5],[["sinapsis","Explorar vista de evolución, recuerdos y conexiones sin predicciones absolutas"]]),
+        phase("piloto","Rigor y piloto",15,[6,7],[["evidencias","Distinguir observaciones comprobadas de hipótesis de IA"]])
+      ]
+    }
+  };
+
+  const escapeText = value => String(value == null ? "" : value).replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+  const percent = (done,total) => total ? Math.round(done / total * 100) : 0;
+  function getItems(project,step) {
+    const previous=(step.legacy||[]).filter(i=>project.tasks[i]).map(i=>({
+      id:project.id+"-"+i,title:project.tasks[i][0],context:project.tasks[i][1]
+    }));
+    const additional=(step.extra||[]).map(item=>({
+      id:"milestone-"+project.id+"-"+step.id+"-"+item[0],title:item[1],context:"Nuevo entregable · confirmar con evidencia"
+    }));
+    return previous.concat(additional);
+  }
+  function stageInfo(project,step) {
+    const items=getItems(project,step);
+    const completed=items.filter(item=>!!state.checks[item.id]).length;
+    return {items,completed,progress:percent(completed,items.length)};
+  }
+  function projectInfo(project) {
+    const config=roadmap[project.id],steps=config?config.phases:[];
+    const totalWeight=steps.reduce((a,s)=>a+s.weight,0)||1;
+    const computed=Math.round(steps.reduce((a,s)=>a+s.weight*stageInfo(project,s).progress,0)/totalWeight);
+    const allItems=steps.flatMap(s=>getItems(project,s));
+    return {progress:computed,completed:allItems.filter(t=>!!state.checks[t.id]).length,total:allItems.length};
+  }
+  function progressBar(value,title,compact) {
+    const v=Math.max(0,Math.min(100,Number(value)||0));
+    return '<div class="rv2-bar'+(compact?' rv2-bar-small':'')+'" role="progressbar" aria-label="'+escapeText(title)+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+v+'"><span style="width:'+v+'%"></span></div>';
+  }
+  const projectHost=document.getElementById("projects");
+  const lifeHost=document.getElementById("lifeTasks");
+  const filter=document.getElementById("filter");
+  if (!projectHost || !lifeHost || !filter) return;
+
+  let portfolioHost=document.getElementById("portfolioV2");
+  if(!portfolioHost) {
+    portfolioHost=document.createElement("section");
+    portfolioHost.id="portfolioV2";
+    portfolioHost.className="rv2-portfolio";
+    projectHost.parentNode.insertBefore(portfolioHost,projectHost);
+  }
+  let indicatorsHost=document.getElementById("lifeIndicatorsV2");
+  if(!indicatorsHost){
+    indicatorsHost=document.createElement("section");
+    indicatorsHost.id="lifeIndicatorsV2";
+    indicatorsHost.className="rv2-kpis";
+    lifeHost.parentNode.insertBefore(indicatorsHost,lifeHost);
+  }
+
+  function renderPortfolio() {
+    const active=projects.filter(p=>roadmap[p.id]&&roadmap[p.id].allocation);
+    const weight=active.reduce((a,p)=>a+roadmap[p.id].allocation,0);
+    const overall=weight?Math.round(active.reduce((sum,p)=>sum+roadmap[p.id].allocation*projectInfo(p).progress,0)/weight):0;
+    const parts=active.map(p=>{
+      const cfg=roadmap[p.id],info=projectInfo(p);
+      return '<div class="rv2-portfolio-row"><div><b>'+escapeText(p.name)+'</b><small>'+cfg.allocation+'% del peso</small></div><strong>'+info.progress+'%</strong></div>'+progressBar(info.progress,p.name+": entregables confirmados",true);
+    }).join("");
+    portfolioHost.innerHTML='<div class="rv2-portfolio-head"><div><div class="eyebrow">PANORAMA GENERAL</div><h3>Portafolio activo</h3><p>Avance de entregables que has marcado como completados en este navegador. No equivale al porcentaje estimado de desarrollo.</p></div><div class="rv2-global"><strong>'+overall+'%</strong><small>registrado</small></div></div>'+progressBar(overall,"Avance verificado del portafolio activo",false)+'<div class="rv2-portfolio-split">'+parts+'</div><p class="rv2-footnote">Ponderación inicial: Denbou 50%, Torre Fuerte 30%, Callejero 20%. Los proyectos en espera no reducen este indicador. Los datos son locales a este dispositivo.</p>';
+    return overall;
+  }
+
+  function renderIndicators(globalProgress) {
+    const today=typeof todayLocalKey==="function"?todayLocalKey():new Date().toISOString().slice(0,10);
+    const careKeys=["breakfast","food","move","read"];
+    const careDone=careKeys.filter(k=>!!state.checks["daily-"+today+"-"+k]).length;
+    const contactKeys=["personal-0","personal-1"];
+    const contactDone=contactKeys.filter(k=>!!state.checks[k]).length;
+    const kpis=[
+      ["Progreso",globalProgress,globalProgress+"% de entregables registrados","Proyectos activos · estudio · finanzas"],
+      ["Salud",percent(careDone,4),careDone+" de 4 acciones de cuidado hoy","Comida · movimiento · descanso · lectura"],
+      ["Vínculos",percent(contactDone,2),contactDone+" de 2 contactos marcados","Familia · amistades · conexión"]
+    ];
+    indicatorsHost.innerHTML='<div class="rv2-kpi-head"><div class="eyebrow">TRES INDICADORES</div><h3>Progreso · Salud · Vínculos</h3><p>Acciones marcadas, no diagnósticos ni valoraciones personales.</p></div><div class="rv2-kpi-grid">'+kpis.map((item,i)=>
+      '<article class="rv2-kpi-card rv2-kpi-'+i+'"><h4>'+item[0]+'</h4><strong>'+item[2]+'</strong>'+progressBar(item[1],item[0]+": acciones verificadas",true)+'<small>'+item[3]+'</small></article>'
+    ).join("")+'</div>';
+  }
+
+  function renderProjectsV2() {
+    const term=(filter.value||"").trim().toLocaleLowerCase("es-MX");
+    const overall=renderPortfolio();
+    renderIndicators(overall);
+    projectHost.innerHTML=projects.map(project=>{
+      const cfg=roadmap[project.id];
+      if(!cfg) return "";
+      const info=projectInfo(project);
+      const matching=cfg.phases.filter(step=>{
+        const text=step.name+" "+getItems(project,step).map(x=>x.title+" "+x.context).join(" ");
+        return !term||(project.name+" "+project.description+" "+text).toLocaleLowerCase("es-MX").includes(term);
+      });
+      if (!matching.length) return "";
+      const stages=matching.map(step=>{
+        const stat=stageInfo(project,step);
+        const filtered=stat.items.filter(item=>!term||(project.name+" "+step.name+" "+item.title+" "+item.context).toLocaleLowerCase("es-MX").includes(term));
+        const shown=filtered.length?filtered:stat.items;
+        return '<details class="rv2-stage" '+(term?'open':'')+'><summary><span><b>'+escapeText(step.name)+'</b><small>Peso de etapa: '+step.weight+'% · '+stat.completed+'/'+stat.items.length+' confirmados'+(step.reference==null?'':' · estimación histórica '+step.reference+'%')+'</small></span><strong>'+stat.progress+'%</strong></summary>'+progressBar(stat.progress,project.name+": "+step.name,true)+'<div class="rv2-stage-tasks">'+shown.map(item=>taskHTML(item.id,item.title,item.context)).join("")+'</div></details>';
+      }).join("");
+      const snapshot=cfg.reference==null?'':'<div class="rv2-reference"><b>'+cfg.reference+'% estimado</b> · fotografía del alcance al '+escapeText(cfg.refDate)+'. No es el avance verificado de los checklists.</div>';
+      return '<article class="card project rv2-project"><div class="rv2-project-head"><div><div class="eyebrow">'+escapeText(cfg.priority)+' · '+escapeText(cfg.mode)+'</div><h3>'+escapeText(project.name)+'</h3><p>'+escapeText(project.description)+'</p></div><span class="rv2-percent">'+info.progress+'%</span></div>'+progressBar(info.progress,project.name+": progreso registrado",false)+'<div class="rv2-counter">'+info.completed+' de '+info.total+' entregables confirmados</div>'+snapshot+'<div class="rv2-next"><strong>Próximo hito</strong><p>'+escapeText(cfg.next)+'</p><strong>Por resolver</strong><p>'+escapeText(cfg.blocker)+'</p></div><details class="rv2-stages" '+(term?'open':'')+'><summary>Ver etapas y entregables ('+cfg.phases.length+')</summary><div class="rv2-stage-grid">'+stages+'</div></details></article>';
+    }).join("");
+  }
+
+  // La página previa guarda casillas como id-índice. Nunca cambiamos ese formato.
+  // Las nuevas usan IDs permanentes milestone-proyecto-etapa-entregable.
+  // Reemplazar la función de presentación no borra checkboxes ni notas anteriores.
+  renderProjects = renderProjectsV2;
+  filter.addEventListener("input",renderProjectsV2);
+  renderProjectsV2();
+})();
