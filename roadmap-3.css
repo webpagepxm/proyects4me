@@ -428,3 +428,46 @@ details[open]>summary{margin-bottom:12px}
  .coach-slot{grid-template-columns:82px minmax(0,1fr)}
  .home-progress>summary{flex-direction:column;gap:3px}
 }
+
+
+/* HOME_COPY_AUDIT_V1 · One action, no duplicated headline/caption/subcopy. */
+#hoy{max-width:1050px}
+#hoy .day-coach{padding:22px 26px 15px;margin:0 0 14px}
+#hoy .coach-head{margin:0 0 12px}
+#hoy .coach-next{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
+ gap:5px 15px;margin:0 0 10px;padding:18px 19px;border:0;background:#282C34;border-radius:14px}
+#hoy .coach-next>span{grid-column:1/-1;letter-spacing:.12em}
+#hoy .coach-next>strong{grid-column:1;align-self:center;font-size:clamp(22px,3vw,30px);
+ font-weight:760;line-height:1.22;letter-spacing:-.045em}
+#hoy .coach-done{grid-column:2;grid-row:2;min-height:44px;min-width:78px;padding:9px 14px;
+ border:0;border-radius:10px;background:#B3FE15;color:#101509;font-size:13px;font-weight:760}
+#hoy .coach-done:hover{background:#C1FF45}
+#hoy .coach-wake{padding:8px 0}
+#hoy .coach-schedule,#hoy .coach-settings{margin-top:0;padding-top:0;border-top:1px solid #353740}
+#hoy .coach-schedule>summary,#hoy .coach-settings>summary{font-size:13px;font-weight:690;min-height:44px;
+ color:#D3D4DA}
+#hoy .coach-slots{padding-bottom:4px}
+#hoy .coach-slot{padding:10px 0;grid-template-columns:106px minmax(0,1fr)}
+#hoy .coach-slot-copy{gap:0}
+#hoy .coach-slot-copy b{font-size:13px;font-weight:650}
+#hoy .home-work{margin-top:0;padding:21px 25px}
+#hoy .home-work .plan-head{align-items:center;margin:0 0 6px}
+#hoy .home-work .plan-head h2{font-size:19px;margin:0;font-weight:740}
+#hoy .home-work .task{padding:12px 0}
+#hoy .home-work .task small{max-width:70ch}
+#hoy .home-progress{margin-top:13px}
+#hoy .home-progress>summary{min-height:52px;padding:13px 19px}
+@media(max-width:780px){
+ #hoy .day-coach{padding:18px 18px 13px}
+ #hoy .coach-next{padding:15px 15px;gap:5px 8px}
+ #hoy .coach-next>strong{font-size:23px}
+ #hoy .coach-done{font-size:12px;min-width:65px;padding:9px 10px}
+ #hoy .home-work{padding:18px}
+ #hoy .home-work .plan-head h2{font-size:18px}
+ #hoy .coach-slot{grid-template-columns:86px minmax(0,1fr);gap:9px;padding:9px 0}
+}
+@media(max-width:360px){
+ #hoy .coach-next>strong{font-size:20px}
+ #hoy .coach-done{min-width:61px}
+ #hoy .coach-slot{grid-template-columns:80px minmax(0,1fr)}
+}
