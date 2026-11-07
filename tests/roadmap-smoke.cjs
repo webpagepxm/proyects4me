@@ -1,0 +1,89 @@
+// ROADMAP 3.0 — regression checks without third-party packages.
+// Run: node tests/roadmap-smoke.cjs
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const path=require('node:path');
+const root=path.join(__dirname,'..');
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const js=fs.readFileSync(path.join(root,'roadmap-3.js'),'utf8');
+const css=fs.readFileSync(path.join(root,'roadmap-3.css'),'utf8');
+assert.match(html,/roadmap-3\.css/);
+assert.match(html,/roadmap-3\.js/);
+assert.doesNotMatch(html,/roadmap-2026\.(js|css)/);
+assert.doesNotMatch(html,/<style\b/);
+assert.equal((html.match(/<script\b/g)||[]).length,1);
+assert.match(css,/--accent:#B3FE15/);
+assert.match(css,/@media\(max-width:780px\)/);
+assert.match(css,/\.rv3-workstream/);
+assert.match(js,/const key='mi-tablero-personal-v1'/);
+assert.doesNotMatch(js,/state\.checks\[id\]=true/);
+new vm.Script(js,{filename:'roadmap-3.js'});
+const nodes={};
+class FakeNode{
+ constructor(id=''){
+  this.id=id;this.value='';this.textContent='';this.innerHTML='';this.className='';
+  this.listeners={};this.dataset={};this.style={setProperty(){}};
+  this.classList={toggle(){},add(){},remove(){}};
+  this.parentNode={insertBefore(n){nodes[n.id]=n;}};
+ }
+ addEventListener(name,fn){(this.listeners[name]??=[]).push(fn);}
+ querySelector(sel){
+  if(this.id==='hoy'&&sel==='.daily-overview')return new FakeNode('overview');
+  if(this.id==='projects'&&sel==='[data-merged-card]')return null;
+  return null;
+ }
+ querySelectorAll(){return [];}
+ insertAdjacentElement(where,node){nodes[node.id]=node;}
+ closest(){return null;}
+ setAttribute(){}
+ click(){for(const fn of this.listeners.click??[])fn({target:this});}
+ select(){}
+ append(){}
+ remove(){}
+}
+for(const m of html.matchAll(/\bid="([^"]+)"/g))nodes[m[1]]=new FakeNode(m[1]);
+const document={
+ body:new FakeNode('body'),listeners:{},
+ getElementById:id=>nodes[id]??null,
+ createElement:tag=>new FakeNode(tag),
+ querySelector:()=>null,
+ querySelectorAll:()=>[],
+ addEventListener(name,fn){(this.listeners[name]??=[]).push(fn);},
+ execCommand:()=>true
+};
+const values=new Map();
+const localStorage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v)};
+const fileURL={createObjectURL:()=>'blob:test',revokeObjectURL(){}};
+const view={scrollTo(){}};
+const eventCtor=class{constructor(type,options){this.type=type;this.bubbles=!!options?.bubbles;}};
+const runtime=new Function('document','localStorage','window','navigator','Blob','URL','confirm','matchMedia','Event',js);
+runtime(document,localStorage,view,{clipboard:{writeText:async()=>{}}},function Blob(){},fileURL,()=>true,()=>({matches:true}),eventCtor);
+const rendered=nodes.projects.innerHTML;
+const rings=nodes.lifeIndicatorsV2.innerHTML;
+assert.match(rendered,/<h3>Callejero \+ Denbou<\/h3>/);
+assert.match(rendered,/<h3>Torre Fuerte<\/h3>/);
+assert.doesNotMatch(rendered,/<h3>Callejero PXM<\/h3>/);
+assert.match(rendered,/Áreas de trabajo \(5\)/);
+assert.match(rendered,/En espera ·/);
+assert.match(rendered,/data-merged-total>38%/);
+for(const name of ['Progreso','Salud','Vínculos'])assert.ok(rings.includes(name),name);
+assert.equal(nodes.filter.listeners.input.length,1,'Only one search listener');
+assert.equal(Object.keys(JSON.parse(values.get('mi-tablero-personal-v1')||'{}').checks||{}).filter(x=>x.startsWith('evidence-')).length,0,'No fabricated completions');
+const slider={
+ dataset:{mergedSlider:'calendar',mergedIndex:'0'},value:'80',
+ style:{setProperty(){}},
+ closest(sel){return sel==='[data-merged-slider]'?this:sel==='.rv3-roadmap-task'?{querySelector:()=>({textContent:''})}:null;}
+};
+const updateProgress=()=>{for(const handler of nodes.projects.listeners.input??[])handler({target:slider});};
+updateProgress();
+const saved=()=>JSON.parse(values.get('mi-tablero-personal-v1')||'{}');
+assert.equal(saved().integratedDenbouProgress['calendar:0'],80);
+nodes.reset.click();
+assert.deepEqual(saved().integratedDenbouProgress,{});
+assert.deepEqual(saved().checks,{});
+updateProgress();
+assert.equal(saved().integratedDenbouProgress['calendar:0'],80,'Slider still saves after reset');
+assert.match(nodes.portfolioV2.innerHTML,/Callejero \+ Denbou/);
+console.log('ROADMAP smoke: 18 structure, render, state, reset, slider and UX checks passed.');
