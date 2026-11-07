@@ -57,3 +57,94 @@
 @media(max-width:950px){#projects{grid-template-columns:1fr}.rv2-portfolio-split{gap:12px}}
 @media(max-width:720px){.rv2-portfolio{padding:19px}.rv2-portfolio-head{gap:12px}.rv2-global{min-width:75px}.rv2-global strong{font-size:33px}.rv2-portfolio-split{grid-template-columns:1fr;gap:16px}.rv2-project{padding:18px!important}.rv2-kpi-grid{grid-template-columns:1fr}.rv2-kpi-card{padding:16px}.rv2-kpi-card>strong{min-height:0}.rv2-kpi-head h3{font-size:20px}}
 @media(prefers-reduced-motion:reduce){.rv2-bar>span{transition:none}}
+
+
+
+/* ROADMAP V3 · Lenguaje visual de Denbou 2.0: carbón, grafito,
+   jerarquía amplia, controles táctiles y tres anillos con SVG propio.
+   No se trasladan funciones ni datos privados de Denbou. */
+:root{color-scheme:dark;--rd-bg:#121419;--rd-surface:#1c2028;--rd-surface-soft:#232832;--rd-line:#343945;--rd-text:#f3f5f9;--rd-muted:#a2aab7;--rd-pink:#ff638d;--rd-lime:#b9ed6c;--rd-cyan:#55d3eb}
+body{background:var(--rd-bg);color:var(--rd-text);font-family:"Plus Jakarta Sans",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.roadmap-side{background:#171a21;border-right-color:var(--rd-line)}
+.sidebrand,.top .brand,.hero h1,.daily-overview h2,.section h2,.plan-head h2{color:var(--rd-text)}
+.sideicon,.pixel{background:var(--rd-pink)}
+.side-nav button{color:var(--rd-muted);min-height:46px}
+.side-nav button.active{background:#352331;color:#ffb5ca}
+.side-nav button:hover:not(.active){background:#272b35;color:var(--rd-text)}
+.sidefoot,.sidesub,.muted,.hero p,.daily-overview p,.plan-plain small,.task small{color:var(--rd-muted)}
+.top .pill,.pill,.plan-count{background:#282d37;color:#bcc4d0}
+.hero .eyebrow,.eyebrow{color:#d2bdcd}
+.card,.rv2-portfolio,.rv2-kpi-card,.rv2-stage,.rv2-project{background:var(--rd-surface);border-color:var(--rd-line);box-shadow:none;color:var(--rd-text)}
+.card h2,.card h3,.card h4,.task b,.plan-plain b,.rv2-project-head h3,.rv2-portfolio h3,.rv2-project .rv2-stage b,.rv2-portfolio-row b{color:var(--rd-text)}
+.task,.plan-plain,.rv2-stages{border-color:var(--rd-line)}
+.task small,.rv2-project-head p,.rv2-portfolio p,.rv2-kpis p,.rv2-portfolio-row small,.rv2-stage>summary small,.rv2-counter,.rv2-footnote,.rv2-stage-tasks small{color:var(--rd-muted)!important}
+.note,.rv2-reference,.rv2-next{background:var(--rd-surface-soft);border:1px solid var(--rd-line);color:#ccd1dc}
+.rv2-next strong,.rv2-stage>summary b,.rv2-stage>summary strong,.rv2-percent,.rv2-global strong,.rv2-portfolio-row strong{color:#e7c6f2}
+.rv2-stage,.rv2-next{border-color:var(--rd-line)}
+.rv2-stages>summary,.projectdetails summary,.weeklink{color:#b8a9fa}
+.rv2-bar,.bar{background:#313641}
+.rv2-bar>span,.fill{background:#aa87ed}
+.rv2-kpi-1 .rv2-bar>span{background:var(--rd-lime)}
+.rv2-kpi-2 .rv2-bar>span{background:var(--rd-cyan)}
+.btn{background:#d765a2;color:#fff;min-height:44px}
+.btn.alt,.btn.ghost{background:#292d39;border-color:var(--rd-line);color:#e0e3eb}
+.input{background:#232731;color:var(--rd-text);border-color:#474d5a}
+.input::placeholder,textarea::placeholder{color:#a6aaba}
+input[type=checkbox]{accent-color:var(--rd-pink)}
+.tag{background:#372739;color:#f4bfdb}
+.focus h3{color:var(--rd-text)}
+.rv2-portfolio-head,.rv2-project-head{align-items:flex-start}
+.rv2-project .rv2-stage{background:#20252e}
+.rv2-kpis{margin:0 0 22px}
+.rv3-life-shell{background:var(--rd-surface);border:1px solid var(--rd-line);border-radius:24px;padding:24px 26px 18px;color:var(--rd-text)}
+.rv3-life-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:22px}
+.rv3-kicker{display:block;font-size:11px;letter-spacing:.13em;color:#b6c1d1;font-weight:760}
+.rv3-life-heading h2{font-size:clamp(22px,3vw,28px);line-height:1.18;margin:8px 0 6px;color:var(--rd-text);letter-spacing:-.045em}
+.rv3-life-heading p{color:var(--rd-muted);font-size:13px;line-height:1.6;margin:0;max-width:520px}
+.rv3-soft-label{border-radius:999px;border:1px solid #3b4452;background:#292e38;color:#d1d7e3;font-size:11px;padding:8px 11px;white-space:nowrap}
+.rv3-life-main{display:grid;grid-template-columns:minmax(0,250px) 1fr;align-items:center;gap:clamp(12px,4vw,50px);margin:4px 0 2px}
+.rv3-rings-figure{display:grid;place-items:center}
+.rv3-rings-figure svg{width:min(100%,250px);height:auto;overflow:visible}
+.rv3-ring-track,.rv3-ring-progress{fill:none;stroke-width:17}
+.rv3-ring-track{opacity:.18}
+.rv3-ring-progress{stroke-linecap:round;transform:rotate(-90deg);transform-origin:132px 132px;transition:stroke-dashoffset .45s ease}
+.rv3-svg-label{font-size:12px;font-weight:800;letter-spacing:.12em;fill:var(--rd-text)}
+.rv3-svg-sub{font-size:9px;font-weight:650;fill:#aab4c4}
+.rv3-metrics{display:grid;gap:9px}
+.rv3-metric{background:#252a34;color:var(--rd-text);display:flex;align-items:center;gap:12px;text-align:left;border:1px solid #3a404c;border-radius:14px;padding:13px 14px;min-height:60px;width:100%;transition:background .15s,border-color .15s}
+.rv3-metric:hover,.rv3-metric.is-selected{background:#303643;border-color:#5c6575}
+.rv3-metric-dot{width:12px;height:12px;flex:none;border-radius:50%;background:var(--ring-color)}
+.rv3-metric-copy{display:grid;gap:3px;flex:1}
+.rv3-metric-copy strong{font-size:14px;font-weight:740}
+.rv3-metric-copy small{font-size:11px;color:var(--rd-muted)}
+.rv3-metric-value{font-size:18px;font-weight:780;font-variant-numeric:tabular-nums}
+.rv3-metric-caret{font-size:17px;color:var(--rd-muted);transform:rotate(0deg)}
+.rv3-metric.is-selected .rv3-metric-caret{transform:rotate(180deg)}
+.rv3-indicator-detail{border-top:1px solid var(--rd-line);padding:17px 1px 3px;margin-top:12px}
+.rv3-indicator-detail[hidden]{display:none!important}
+.rv3-indicator-detail h4{margin:0 0 7px;font-size:16px}
+.rv3-indicator-detail p{font-size:12px;line-height:1.6;color:var(--rd-muted);margin:0 0 12px}
+.rv3-check{display:flex;align-items:flex-start;gap:11px;padding:12px 3px;border-top:1px solid #323743;cursor:pointer}
+.rv3-check input{width:20px;height:20px;flex:none;margin:2px 0 0}
+.rv3-check b{display:block;font-size:13px;font-weight:700;color:var(--rd-text)}
+.rv3-check small{display:block;color:var(--rd-muted);font-size:11px;line-height:1.5;margin-top:4px}
+.rv3-open-projects{border:1px solid #5d6373;background:#343a48;color:#f8f8fb;border-radius:12px;padding:12px 15px;font-weight:730;min-height:44px}
+.rv3-open-projects:hover{background:#434959}
+.rv3-ring-note{border-top:1px solid #323743;padding-top:12px;margin:14px 0 0;color:#9ea8b7;font-size:11px;line-height:1.55}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--rd-cyan);outline-offset:3px}
+@media(max-width:720px){
+  .roadmap-bottom{background:#212630eb;border-color:#414653;box-shadow:0 12px 40px #090c14a8}
+  .roadmap-bottom button{color:#a8b0be}
+  .roadmap-bottom button.active{background:#3d2a3d;color:#ffbcd0}
+  .rv3-life-shell{padding:19px 16px 14px;border-radius:21px}
+  .rv3-life-heading{gap:8px}
+  .rv3-life-heading h2{font-size:21px}
+  .rv3-soft-label{display:none}
+  .rv3-life-main{grid-template-columns:1fr;gap:3px;margin-top:6px}
+  .rv3-rings-figure svg{width:min(100%,205px)}
+  .rv3-metrics{gap:7px}
+  .rv3-metric{min-height:51px;padding:10px 12px}
+  .rv3-metric-value{font-size:16px}
+  .rv2-portfolio-split{gap:17px}
+}
+@media(prefers-reduced-motion:reduce){.rv3-ring-progress,.rv3-metric{transition:none}}
