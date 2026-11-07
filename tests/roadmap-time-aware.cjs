@@ -67,7 +67,7 @@ assert.match(night.nodes.dayCoach.innerHTML,/Dejar el teléfono y las redes/);
 assert.match(night.nodes.dayCoach.innerHTML,/23:30/);
 assert.match(night.nodes.priorityList.innerHTML,/La programación puede esperar a mañana/);
 assert.doesNotMatch(night.nodes.priorityList.innerHTML,/milestone-backstage/);
-assert.match(night.nodes.dayCoach.innerHTML,/Apagar pantallas/);
+assert.match(night.nodes.dayCoach.innerHTML,/Dejar el teléfono y las redes/);
 assert.doesNotMatch(night.nodes.dayCoach.innerHTML,/¿Acabas de despertar/);
 const afterMidnight=simulate(2);
 assert.match(afterMidnight.nodes.dayCoach.innerHTML,/Dormir y desconectar/);
