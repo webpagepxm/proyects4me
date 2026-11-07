@@ -87,28 +87,62 @@
     }
   };
 
+
+  // Evidencias de decisiones y resultados documentados en conversación.
+  // Tener el alcance definido NO significa haber implementado el sistema.
+  const documentedEvidence={"backstage":[["arquitectura","stack","Existe Denbou con Supabase, organizaciones y acceso privado.","Base existente; seguridad real pendiente"],["operaciones","events","Codex probó eventos, recurrencias, tareas y finanzas en demo.","Pruebas locales reportadas"],["finanzas","fix","Codex reportó correcciones financieras con pruebas de regresión.","En rama aislada; no está publicado"],["calidad","tests","Codex reportó 197 pruebas aprobadas y 192 verificaciones de navegador.","Informe de auditoría, datos ficticios"],["calidad","a11y","Codex reportó 0 infracciones axe en 30 estados examinados.","Prueba automática, no certificación"],["diseno","home","Ya existe una portada simplificada y anillos de progreso.","Versión existente; rediseño pendiente"],["ia","assistant","Existe asistente de lectura y clasificación financiera local.","Escritura por IA aún pendiente"]],"torre":[["captacion","scope","Se definió landing con QR, WhatsApp y reseñas.","Alcance acordado; publicación por verificar"],["registros","model","Se definieron Clientes, Motos, Servicios y Seguimientos.","Modelo conceptual"],["ordenes","flow","Se definió el flujo de orden de servicio y sus estados.","Diseño, no prueba de funcionamiento"],["seguimiento","private","Se aprobó enlace privado por orden para consultar avances.","Función planeada"],["agenda","booking","Se definió flujo de citas por WhatsApp, verificando disponibilidad.","Flujo planeado, no conectado"],["impresion","choices","Se valoraron impresora térmica Bluetooth y opción Android.","Evaluación, no compra"]],"callejero":[["alcance","ownership","Se aclaró que Callejero pertenece a Denise y su socia.","Decisión confirmada"],["landing","fields","Se definieron datos de registro y preferencias de asistentes.","Requisitos de formulario"],["rps","qr","Se acordó atribuir registros con QR individual por RP.","Alcance definido"],["operacion","inperson","Se acordó complementar la operación presencial, no sustituirla.","Decisión operativa"],["analitica","reports","Se propusieron indicadores por RP, fecha, estancia y gustos.","Análisis definido, no producción"],["denbou","separate","Se definió distinguir la landing Callejero del sistema privado Denbou.","Arquitectura acordada"]],"sommo":[["academy","bank","Se definió banco de aproximadamente 200 preguntas.","Alcance de Academy"],["academy","levels","Se acordaron tres niveles de evaluación y ranking.","Requisitos aprobados"],["checador","qr","Se planteó checador por QR y exportación.","Alcance, sin prueba real"]],"agencia":[["oferta","tiers","Se acordó ofrecer páginas, ecosistemas y agentes de IA.","Modelo comercial"],["oferta","marketing","Se limitó la oferta de marketing complementario.","Límites definidos"],["pilotos","clients","Se priorizaron Denbou, Callejero y Torre Fuerte como pilotos.","Plan de pilotos"],["seguridad","privacy","Se definió aislamiento de clientes y datos por empresa.","Principio de seguridad"],["inteligencia","creative","Se propuso entrevista adaptativa y cerebro de marca.","Diseño conceptual"],["plataforma","saas","Se acordó evaluar SaaS tras validar pilotos.","Objetivo estratégico"]],"slider":[["organizacion","gantt","Se solicitó calendario y Gantt con planeación anticipada.","Requisito"],["herramientas","metricool","Se acordó verificar funciones reales antes de reemplazar Metricool.","Criterio de aceptación"],["creatividad","pelusa","Se definió línea creativa de Pelusa y Borges.","Brief aprobado"],["academy","training","Se planteó una futura academia operativa.","Idea, no implementada"]],"brujula":[["vision","identity","Se definió Brújula como segundo cerebro distinto de ROADMAP.","Visión de producto"],["vision","privacy","Se definió control y portabilidad de recuerdos.","Política conceptual"],["arquitectura","provider","Se acordó separar memoria, proveedores de IA y permisos.","Arquitectura propuesta"],["experiencia","pixel","Se eligió avatar pixel art y reflexión gradual.","Dirección visual"],["piloto","rigor","Se acordó separar observaciones comprobadas de hipótesis.","Criterio de rigor"]]};
+  const evidenceId=(project,stage,key)=>"evidence-"+project+"-"+stage+"-"+key;
+  let seeded=0;
+  for(const [project,entries] of Object.entries(documentedEvidence)){
+    for(const [stage,key] of entries){
+      const id=evidenceId(project,stage,key);
+      if(!Object.prototype.hasOwnProperty.call(state.checks,id)){
+        state.checks[id]=true;
+        seeded++;
+      }
+    }
+  }
+  if(seeded && typeof save==="function")save();
+
   const escapeText = value => String(value == null ? "" : value).replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
   const percent = (done,total) => total ? Math.round(done / total * 100) : 0;
+
   function getItems(project,step) {
-    const previous=(step.legacy||[]).filter(i=>project.tasks[i]).map(i=>({
-      id:project.id+"-"+i,title:project.tasks[i][0],context:project.tasks[i][1]
+    const original=(step.legacy||[]).filter(i=>project.tasks[i]).map(i=>({
+      id:project.id+"-"+i,title:project.tasks[i][0],context:project.tasks[i][1],weight:1,kind:"pending"
     }));
-    const additional=(step.extra||[]).map(item=>({
-      id:"milestone-"+project.id+"-"+step.id+"-"+item[0],title:item[1],context:"Nuevo entregable · confirmar con evidencia"
+    const newTasks=(step.extra||[]).map(item=>({
+      id:"milestone-"+project.id+"-"+step.id+"-"+item[0],title:item[1],
+      context:"Pendiente · verificar entrega",weight:1,kind:"pending"
     }));
-    return previous.concat(additional);
+    const evidence=(documentedEvidence[project.id]||[]).filter(e=>e[0]===step.id).map(e=>({
+      id:evidenceId(project.id,step.id,e[1]),title:e[2],
+      context:e[3]+" · documentado en chat",weight:0.35,kind:"documented"
+    }));
+    return evidence.concat(original,newTasks);
   }
   function stageInfo(project,step) {
     const items=getItems(project,step);
-    const completed=items.filter(item=>!!state.checks[item.id]).length;
-    return {items,completed,progress:percent(completed,items.length)};
+    const completed=items.filter(t=>!!state.checks[t.id]).length;
+    let progress=0;
+    if(project.id==="backstage" && step.reference!=null){
+      const remaining=items.filter(t=>t.kind!=="documented");
+      const newlyDone=remaining.filter(t=>!!state.checks[t.id]).length;
+      const fraction=remaining.length?newlyDone/remaining.length:0;
+      progress=Math.round(step.reference+(100-step.reference)*fraction);
+    }else{
+      const available=items.reduce((n,t)=>n+t.weight,0);
+      const done=items.filter(t=>!!state.checks[t.id]).reduce((n,t)=>n+t.weight,0);
+      progress=available?Math.round(done/available*100):0;
+    }
+    return {items,completed,progress};
   }
   function projectInfo(project) {
     const config=roadmap[project.id],steps=config?config.phases:[];
-    const totalWeight=steps.reduce((a,s)=>a+s.weight,0)||1;
-    const computed=Math.round(steps.reduce((a,s)=>a+s.weight*stageInfo(project,s).progress,0)/totalWeight);
-    const allItems=steps.flatMap(s=>getItems(project,s));
-    return {progress:computed,completed:allItems.filter(t=>!!state.checks[t.id]).length,total:allItems.length};
+    const sum=steps.reduce((n,s)=>n+s.weight,0)||1;
+    const value=Math.round(steps.reduce((n,s)=>n+s.weight*stageInfo(project,s).progress,0)/sum);
+    const items=steps.flatMap(s=>getItems(project,s));
+    return {progress:value,completed:items.filter(t=>!!state.checks[t.id]).length,total:items.length};
   }
   function progressBar(value,title,compact) {
     const v=Math.max(0,Math.min(100,Number(value)||0));
@@ -140,9 +174,9 @@
     const overall=weight?Math.round(active.reduce((sum,p)=>sum+roadmap[p.id].allocation*projectInfo(p).progress,0)/weight):0;
     const parts=active.map(p=>{
       const cfg=roadmap[p.id],info=projectInfo(p);
-      return '<div class="rv2-portfolio-row"><div><b>'+escapeText(p.name)+'</b><small>'+cfg.allocation+'% del peso</small></div><strong>'+info.progress+'%</strong></div>'+progressBar(info.progress,p.name+": entregables confirmados",true);
+      return '<div class="rv2-portfolio-row"><div><b>'+escapeText(p.name)+'</b><small>'+cfg.allocation+'% del peso</small></div><strong>'+info.progress+'%</strong></div>'+progressBar(info.progress,p.name+": entregables marcados",true);
     }).join("");
-    portfolioHost.innerHTML='<div class="rv2-portfolio-head"><div><div class="eyebrow">PANORAMA GENERAL</div><h3>Portafolio activo</h3><p>Avance de entregables que has marcado como completados en este navegador. No equivale al porcentaje estimado de desarrollo.</p></div><div class="rv2-global"><strong>'+overall+'%</strong><small>registrado</small></div></div>'+progressBar(overall,"Avance verificado del portafolio activo",false)+'<div class="rv2-portfolio-split">'+parts+'</div><p class="rv2-footnote">Ponderación inicial: Denbou 50%, Torre Fuerte 30%, Callejero 20%. Los proyectos en espera no reducen este indicador. Los datos son locales a este dispositivo.</p>';
+    portfolioHost.innerHTML='<div class="rv2-portfolio-head"><div><div class="eyebrow">PANORAMA GENERAL</div><h3>Portafolio activo</h3><p>Avance orientativo según lo documentado: Denbou parte de la estimación técnica; los demás muestran decisiones definidas y pendientes verificados. No equivale a producción.</p></div><div class="rv2-global"><strong>'+overall+'%</strong><small>orientativo</small></div></div>'+progressBar(overall,"Avance orientativo del portafolio activo",false)+'<div class="rv2-portfolio-split">'+parts+'</div><p class="rv2-footnote">Ponderación: Denbou 50%, Torre Fuerte 30%, Callejero 20%. Incluye estimaciones y acuerdos de alcance; no certifica publicaciones. Las marcas son locales a este dispositivo.</p>';
     return overall;
   }
 
@@ -153,7 +187,7 @@
     const contactKeys=["personal-0","personal-1"];
     const contactDone=contactKeys.filter(k=>!!state.checks[k]).length;
     const kpis=[
-      ["Progreso",globalProgress,globalProgress+"% de entregables registrados","Proyectos activos · estudio · finanzas"],
+      ["Progreso",globalProgress,globalProgress+"% de avance orientativo","Proyectos activos · estudio · finanzas"],
       ["Salud",percent(careDone,4),careDone+" de 4 acciones de cuidado hoy","Comida · movimiento · descanso · lectura"],
       ["Vínculos",percent(contactDone,2),contactDone+" de 2 contactos marcados","Familia · amistades · conexión"]
     ];
@@ -179,10 +213,10 @@
         const stat=stageInfo(project,step);
         const filtered=stat.items.filter(item=>!term||(project.name+" "+step.name+" "+item.title+" "+item.context).toLocaleLowerCase("es-MX").includes(term));
         const shown=filtered.length?filtered:stat.items;
-        return '<details class="rv2-stage" '+(term?'open':'')+'><summary><span><b>'+escapeText(step.name)+'</b><small>Peso de etapa: '+step.weight+'% · '+stat.completed+'/'+stat.items.length+' confirmados'+(step.reference==null?'':' · estimación histórica '+step.reference+'%')+'</small></span><strong>'+stat.progress+'%</strong></summary>'+progressBar(stat.progress,project.name+": "+step.name,true)+'<div class="rv2-stage-tasks">'+shown.map(item=>taskHTML(item.id,item.title,item.context)).join("")+'</div></details>';
+        return '<details class="rv2-stage" '+(term?'open':'')+'><summary><span><b>'+escapeText(step.name)+'</b><small>Peso de etapa: '+step.weight+'% · '+stat.completed+'/'+stat.items.length+' marcados'+(step.reference==null?'':' · base estimada '+step.reference+'%')+'</small></span><strong>'+stat.progress+'%</strong></summary>'+progressBar(stat.progress,project.name+": "+step.name,true)+'<div class="rv2-stage-tasks">'+shown.map(item=>taskHTML(item.id,item.title,item.context)).join("")+'</div></details>';
       }).join("");
-      const snapshot=cfg.reference==null?'':'<div class="rv2-reference"><b>'+cfg.reference+'% estimado</b> · fotografía del alcance al '+escapeText(cfg.refDate)+'. No es el avance verificado de los checklists.</div>';
-      return '<article class="card project rv2-project"><div class="rv2-project-head"><div><div class="eyebrow">'+escapeText(cfg.priority)+' · '+escapeText(cfg.mode)+'</div><h3>'+escapeText(project.name)+'</h3><p>'+escapeText(project.description)+'</p></div><span class="rv2-percent">'+info.progress+'%</span></div>'+progressBar(info.progress,project.name+": progreso registrado",false)+'<div class="rv2-counter">'+info.completed+' de '+info.total+' entregables confirmados</div>'+snapshot+'<div class="rv2-next"><strong>Próximo hito</strong><p>'+escapeText(cfg.next)+'</p><strong>Por resolver</strong><p>'+escapeText(cfg.blocker)+'</p></div><details class="rv2-stages" '+(term?'open':'')+'><summary>Ver etapas y entregables ('+cfg.phases.length+')</summary><div class="rv2-stage-grid">'+stages+'</div></details></article>';
+      const snapshot=cfg.reference==null?'':'<div class="rv2-reference"><b>'+cfg.reference+'% estimado</b> · fotografía del alcance al '+escapeText(cfg.refDate)+'. Se actualizará al completar nuevas tareas; falta validar producción.</div>';
+      return '<article class="card project rv2-project"><div class="rv2-project-head"><div><div class="eyebrow">'+escapeText(cfg.priority)+' · '+escapeText(cfg.mode)+'</div><h3>'+escapeText(project.name)+'</h3><p>'+escapeText(project.description)+'</p></div><span class="rv2-percent">'+info.progress+'%</span></div>'+progressBar(info.progress,project.name+": avance orientativo",false)+'<div class="rv2-counter">'+info.completed+' de '+info.total+' entregables marcados</div>'+snapshot+'<div class="rv2-next"><strong>Próximo hito</strong><p>'+escapeText(cfg.next)+'</p><strong>Por resolver</strong><p>'+escapeText(cfg.blocker)+'</p></div><details class="rv2-stages" '+(term?'open':'')+'><summary>Ver etapas y entregables ('+cfg.phases.length+')</summary><div class="rv2-stage-grid">'+stages+'</div></details></article>';
     }).join("");
   }
 
@@ -192,4 +226,27 @@
   renderProjects = renderProjectsV2;
   filter.addEventListener("input",renderProjectsV2);
   renderProjectsV2();
+
+  // Próximos pasos alineados con la última auditoría y con prioridades actuales.
+  if(typeof priorityQueue!=="undefined" && typeof renderDailyPlan==="function"){
+    priorityQueue.splice(0,priorityQueue.length,
+      ["milestone-backstage-calidad-diff-final","Denbou · revisar el código corregido","Comprobar compatibilidad con main y permisos"],
+      ["milestone-backstage-calidad-guardar-rama","Denbou · guardar correcciones","Rama remota y respaldo antes de integrar"],
+      ["milestone-backstage-entrega-merge","Denbou · integrar y validar","Probar y publicar únicamente tras revisión"],
+      ["milestone-backstage-diseno-tres-conceptos","Denbou · prototipos de diseño","Tres direcciones visuales sin tocar producción"],
+      ["milestone-backstage-ia-groq-actual","Denbou · verificar la conexión Groq","Mantener permisos y lectura confiable"],
+      ["milestone-backstage-whatsapp-meta-test","Denbou · iniciar WhatsApp de prueba","Webhook y registro seguro, todavía no conectado"],
+      ["milestone-torre-ordenes-flujo","Torre Fuerte · validar órdenes","Probar Android, estados y enlaces privados"],
+      ["milestone-callejero-rps-qr-piloto","Callejero · validar QR por RP","Piloto consentido y datos segmentados"]
+    );
+    renderDailyPlan();
+  }
+  const unknowns=document.getElementById("unknowns");
+  if(unknowns)unknowns.innerHTML=[
+    "Denbou: integración técnica auditada y pruebas de backend real",
+    "Denbou: rediseño UX/UI y pruebas con Safari físico",
+    "WhatsApp y voz: diseño definido, conexión pendiente",
+    "Torre Fuerte: órdenes, acceso privado y flujo Android por verificar",
+    "Callejero: atribución QR por RP y permisos por validar"
+  ].map(s=>'<div class="checkline"><span class="pill">Pendiente</span>'+escapeText(s)+'</div>').join("");
 })();
