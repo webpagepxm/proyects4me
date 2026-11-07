@@ -31,6 +31,181 @@ function weekMondayKey(){const d=new Date();const weekday=(d.getDay()+6)%7;d.set
 function runWeeklyId(){return 'running-week-'+weekMondayKey()}
 function todayCheckin(){if(!state.daily||typeof state.daily!=='object')state.daily={};const key=todayLocalKey();if(!state.daily[key])state.daily[key]={};return state.daily[key]}
 function plainCare(title,sub){return '<div class="plan-plain"><span class="plan-symbol">·</span><span><b>'+title+'</b><small>'+sub+'</small></span></div>'}
+
+// ROADMAP_TIME_AWARE_DAY_V1: reglas locales de horario, sin IA, GPS ni notificaciones.
+// Abrir la página NO demuestra que la persona acaba de despertar.
+const coachHost=document.getElementById('dayCoach');
+const coachMinutes=()=>{const n=new Date();return n.getHours()*60+n.getMinutes()};
+const coachClock=minutes=>{
+ const p=((Math.floor(minutes)%1440)+1440)%1440;
+ return String(Math.floor(p/60)).padStart(2,'0')+':'+String(p%60).padStart(2,'0');
+};
+function coachParseTime(text,fallback=930){
+ if(typeof text!=='string'||!/^([01]\d|2[0-3]):[0-5]\d$/.test(text))return fallback;
+ return Number(text.slice(0,2))*60+Number(text.slice(3));
+}
+function coachTimeLabel(a,b){return coachClock(a)+'–'+coachClock(b);}
+function coachSteps(start,end,morning,mainTask,readDone){
+ const duration=Math.max(0,end-start);
+ if(duration<=0)return [];
+ let t=start;
+ const steps=[];
+ const add=(mins,title,details)=>{
+   const use=Math.min(Math.max(0,Math.floor(mins)),Math.max(0,end-t));
+   if(use<5)return;
+   steps.push({start:t,end:t+use,title,details});
+   t+=use;
+ };
+ if(duration<105){
+   add(Math.min(18,Math.floor(duration*.27)),'Cubrir lo básico','Agua, higiene y algo de comer, si hace falta');
+   add(Math.max(0,duration-35),'Una acción concreta','Escoge solo un paso del proyecto prioritario');
+   add(end-t,'Prepararte para salir','No necesitas recuperar el día completo');
+   return steps;
+ }
+ const prep=Math.min(25,Math.floor(duration*.13));
+ const available=duration-prep;
+ if(morning){
+   const routine=Math.min(85,Math.max(45,Math.floor(available*.28)));
+   const proportions=[10,25,35,15];
+   let balance=routine;
+   const portions=proportions.map((n,i)=>{const value=i===3?balance:Math.max(5,Math.round(routine*n/85));balance-=value;return value});
+   add(portions[0],'Higiene y agua','Lavarte los dientes y tomar agua');
+   add(portions[1],'Desayunar','Comer antes de entrar a los proyectos');
+   add(portions[2],'Actividad física','30 minutos como base cuando haya tiempo');
+   add(portions[3],'Prepararte','Ducha o alistarte para el día');
+ }
+ const forWork=Math.max(0,end-t-prep);
+ const breakFood=forWork>100?Math.min(30,Math.round(forWork*.10)):0;
+ const read=morning&&forWork>330&&!readDone?15:0;
+ const breakShort=forWork>200?10:0;
+ let focus=forWork-breakFood-read-breakShort;
+ if(focus<0)focus=0;
+ const parts=focus>260?3:focus>135?2:1;
+ const first=Math.floor(focus/parts);
+ add(first,'Proyecto principal','Un paso verificable: '+mainTask);
+ if(read)add(read,'Lectura breve (opcional)','15 minutos para leer si te resulta agradable');
+ if(breakFood)add(breakFood,'Pausa para comer','No sacrificar la alimentación por programar');
+ if(breakShort)add(breakShort,'Pausa breve','Agua, caminar o despejarte');
+ for(let i=1;i<parts;i++)add(i===parts-1?Math.max(0,focus-first*(parts-1)):first,i===1?'Segundo bloque de trabajo':'Último bloque de trabajo','Retomar el siguiente paso, solo si hay energía');
+ add(end-t,'Cerrar y prepararte','Guardar cambios, recoger tus cosas y salir sin prisas');
+ return steps;
+}
+function coachFocus(now,phase,key,shiftChoice,work){
+ const done=id=>!!state.checks['daily-'+key+'-'+id];
+ if(phase==='night'){
+   if(now<360||now>=60&&now<360)return ['Dormir y desconectar','Si aún estás despierto, no hace falta abrir otra tarea de programación.'];
+   return ['Baja el ritmo','Deja las redes, prepara lo de mañana y busca una hora tranquila para dormir.'];
+ }
+ if(phase==='morning'){
+   const care=[['teeth','Lavarte los dientes y tomar agua'],['breakfast','Desayunar'],['move','Hacer 30 minutos de movimiento']];
+   const next=care.find(item=>!done(item[0]));
+   if(next)return [next[1],'Empieza por lo básico. Cuando termines, marca la acción y verás el siguiente paso.'];
+   return [work?.[1]||'Revisar tu primera misión','Tu rutina inicial está cubierta. Ahora, una tarea del proyecto prioritario.'];
+ }
+ if(phase==='afternoon'){
+   if(now>=13*60&&!done('food'))return ['Hacer una pausa para comer','Después vuelves a tu misión, sin saltarte la comida.'];
+   return [work?.[1]||'Revisar el siguiente paso del proyecto','Un bloque de concentración. Si se acerca tu salida, elige un paso pequeño.'];
+ }
+ if(shiftChoice===false){
+   return [now<19*60&&work?work[1]:'Descansar y recuperar energía','Si aún quieres avanzar, haz un bloque corto; también cuenta terminar a tiempo.'];
+ }
+ return ['Atender tu turno o tus compromisos','La hora de salida es una referencia editable. No asumiré que estás trabajando sin confirmarlo.'];
+}
+function renderDayCoach(){
+ if(!coachHost)return;
+ const key=todayLocalKey(),day=todayCheckin(),now=coachMinutes();
+ let departure=coachParseTime(day.coachDeparture,15*60+30);
+ const shift=day.coachShift??null;
+ const effectiveEnd=shift===false?Math.max(departure,18*60):departure;
+ const morning=now>=360&&now<720;
+ const phase=(now<360||now>=21*60)?'night':
+   now<720?'morning':now<effectiveEnd?'afternoon':'late';
+ if(phase==='morning'||phase==='afternoon'){
+   if(!Number.isFinite(+day.coachOpenedAt)){
+     day.coachOpenedAt=now;
+     save();
+   }
+ }
+ const availableWork=priorityQueue.filter(x=>!state.checks[x[0]]);
+ const first=availableWork[0];
+ const [focus,focusNote]=coachFocus(now,phase,key,shift,first);
+ const periodNames={morning:'MAÑANA',afternoon:'ANTES DE SALIR',late:'TARDE',night:'NOCHE'};
+ const opening=Number.isFinite(+day.coachOpenedAt)?+day.coachOpenedAt:now;
+ const start=Math.max(360,Math.min(now,opening));
+ const items=phase==='morning'||phase==='afternoon'?
+   coachSteps(start,effectiveEnd,phase==='morning',first?first[1]:'hacer un pequeño avance',!!state.checks['daily-'+key+'-read']):
+   phase==='late'?
+   [
+     {start:now,end:Math.min(now+30,21*60),title:shift===true?'Turno de trabajo':'Cerrar compromisos',details:shift===true?'Atiende tu turno, sin sumar tareas de programación':'Si no hay turno, puedes descansar o cerrar algo pequeño'},
+     {start:Math.min(now+30,21*60),end:21*60,title:'Comida y pausa',details:'Cuida tu energía antes de la noche'}
+   ].filter(x=>x.end>x.start):
+   now>=360?[]:
+   [
+     {start:now,end:Math.min(24*60,Math.max(now+20,23*60+30)),title:'Apagar pantallas y bajar estímulos',details:'Dejar redes y preparar lo de mañana'},
+     {start:Math.min(24*60,Math.max(now+20,23*60+30)),end:24*60+30,title:'Lectura y descanso',details:'15–30 minutos de lectura si te ayuda a relajarte'}
+   ].filter(x=>x.end>x.start);
+ const title=phase==='morning'?'Primero tu rutina, después los proyectos.':
+   phase==='afternoon'?'Un paso importante antes de salir.':
+   phase==='late'?'El trabajo también tiene hora de cierre.':
+   'Prepara una noche más tranquila.';
+ const description=phase==='night'?
+  'Objetivo gradual: acostarte cerca de medianoche–1:00. Evita abrir pendientes nuevos por la noche.':
+  phase==='late'?
+  'Si tienes turno, el plan de programación puede esperar. Si no, ajusta el horario en opciones.':
+  'La propuesta parte de la hora en que abriste ROADMAP, no de una supuesta hora de despertar.';
+ const rows=items.slice(0,10).map(item=>
+   '<div class="coach-slot"><span class="coach-slot-time">'+coachTimeLabel(item.start,item.end)+'</span>'+
+   '<span class="coach-slot-copy"><b>'+item.title+'</b><small>'+item.details+'</small></span></div>'
+ ).join('');
+ const wakePrompt=morning&&!day.coachWakeAnswered?
+   '<div class="coach-wake"><span>Entraste a las '+coachClock(opening)+'. ¿Acabas de despertar?</span>'+
+   '<div><button type="button" data-coach-action="woke">Sí, ahora</button>'+
+   '<button type="button" data-coach-action="awake">Ya estaba despierto</button></div></div>':
+   day.coachWakeAnswered==='woke'&&morning?
+   '<p class="coach-confirm">Despertar confirmado: '+coachClock(day.coachWakeTime??now)+'.</p>':'';
+ const shiftStatus=shift===null?'Sin confirmar':shift===true?'Tengo turno hoy':'Día sin turno';
+ coachHost.innerHTML=
+   '<div class="coach-head"><span class="eyebrow">TU ESTRUCTURA · '+periodNames[phase]+'</span>'+
+   '<span class="coach-clock">'+coachClock(now)+'</span></div>'+
+   '<h2>'+title+'</h2><p class="coach-caption">'+description+'</p>'+
+   '<div class="coach-next"><span>AHORA</span><strong>'+focus+'</strong><small>'+focusNote+'</small></div>'+
+   wakePrompt+
+   '<details class="coach-schedule"><summary>Ver la estructura recomendada del día <span>('+items.length+' bloques)</span></summary>'+
+   '<div class="coach-slots">'+(rows||'<p>Lo más importante ahora es descansar.</p>')+'</div></details>'+
+   '<details class="coach-settings"><summary>Ajustar mi horario</summary>'+
+   '<div class="coach-setting-row"><label for="coachDeparture">Salida / cierre estimado</label>'+
+   '<input id="coachDeparture" data-coach-departure type="time" value="'+coachClock(departure)+'"></div>'+
+   '<div class="coach-setting-row"><span>¿Hay turno de trabajo hoy?</span><div class="coach-shift-choices">'+
+   '<button type="button" data-coach-action="shift-yes" aria-pressed="'+(shift===true)+'">Sí</button>'+
+   '<button type="button" data-coach-action="shift-no" aria-pressed="'+(shift===false)+'">No</button></div></div>'+
+   '<p class="coach-hint">'+shiftStatus+'. Referencia inicial: 15:30, puedes cambiarla. No se leen tus calendarios.</p></details>'+
+   '<p class="coach-disclaimer">Recomendaciones locales por hora; no son notificaciones ni una IA conectada.</p>';
+}
+if(coachHost){
+ coachHost.addEventListener('click',event=>{
+  const button=event.target.closest('[data-coach-action]');
+  if(!button)return;
+  const day=todayCheckin(),action=button.dataset.coachAction;
+  if(action==='woke'||action==='awake'){
+   day.coachWakeAnswered=action;
+   if(action==='woke'){day.coachWakeTime=coachMinutes();day.coachOpenedAt=day.coachWakeTime;}
+  }else if(action==='shift-yes')day.coachShift=true;
+  else if(action==='shift-no')day.coachShift=false;
+  else return;
+  save();renderDayCoach();
+ });
+ coachHost.addEventListener('change',event=>{
+  const time=event.target.closest('[data-coach-departure]');
+  if(!time)return;
+  if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(time.value))return;
+  const day=todayCheckin();day.coachDeparture=time.value;
+  save();renderDayCoach();
+ });
+ document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)renderDayCoach();
+ });
+}
+
 function renderDailyPlan(){
  const key=todayLocalKey(), work=priorityQueue.filter(x=>!state.checks[x[0]]).slice(0,3);
  const projectEl=document.getElementById('priorityList'),careEl=document.getElementById('careList');
@@ -39,16 +214,23 @@ function renderDailyPlan(){
   (work.length>1?'<details class="more-priorities"><summary>Otras '+(work.length-1)+' prioridades</summary>'+work.slice(1).map(x=>taskHTML(x[0],x[1],x[2])).join('')+'</details>':'')
   :plainCare('Momento de revisar','Ya cumpliste el foco. Cuéntame qué sigue para que actualice el tablero.');
  document.getElementById('workCount').textContent=work.length?'1 principal':'Sin pendientes';
- const care=[
- ['breakfast','Desayunar y tomar agua','Antes de trabajar, o ahora mismo si se hizo tarde.'],
- ['food','Resolver alimentos y despensa','Revisar qué hay y comprar comida si hace falta.'],
- ['move','Mover el cuerpo 15–20 minutos','Caminar o ejercicio ligero. Correr una vez a la semana.'],
- ['read','Leer al menos 15 minutos','Al final del día; creceremos hacia una hora si resulta sostenible.']
- ];
+ const hour=coachMinutes(),night=hour<360||hour>=21*60;
+ const care=night?
+   [['read','Leer 15–30 minutos','Una forma tranquila de desconectar.'],
+    ['rest','Prepararte para dormir','Bajar pantallas y buscar descanso, sin exigirte perfección.']]:
+   hour>=12*60?
+   [['food','Comer o resolver tu comida','No dejar la alimentación para lo último.'],
+    ['move','Moverte al menos 30 minutos','Si aún no lo hiciste, ajusta a lo que sea viable.']]:
+   [['teeth','Lavarte los dientes y tomar agua','Un primer paso sencillo.'],
+    ['breakfast','Desayunar','Comer antes de trabajar.'],
+    ['move','Hacer 30 minutos de ejercicio','O caminar, según cómo te encuentres.']];
  const open=care.filter(([id])=>!state.checks['daily-'+key+'-'+id]);
- careEl.innerHTML=open.length?open.map(([id,title,sub])=>taskHTML('daily-'+key+'-'+id,title,sub)).join(''):plainCare('Lo esencial está cubierto','Puedes descansar o contarme cómo fue tu día.');
+ careEl.innerHTML=open.length?taskHTML('daily-'+key+'-'+open[0][0],open[0][1],open[0][2])+
+   (open.length>1?'<details class="more-priorities"><summary>Otros cuidados ('+(open.length-1)+')</summary>'+open.slice(1).map(([id,title,sub])=>taskHTML('daily-'+key+'-'+id,title,sub)).join('')+'</details>':''):
+   plainCare('Lo esencial está cubierto','Puedes continuar con calma.');
  document.getElementById('dayHeadline').textContent='Un día a la vez.';
- document.getElementById('dayReason').textContent='Tu salud y tus proyectos tienen lugar en el mismo plan. Hoy no necesitas hacerlo todo.';
+ document.getElementById('dayReason').textContent='ROADMAP usa la hora del dispositivo para sugerir qué hacer ahora.';
+ renderDayCoach();
 }
 function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa, movimiento diario, lectura de 15 minutos. Meta semanal: correr una vez. Ajustar tiempos de despertar en nuestra conversación.';}
 
@@ -426,7 +608,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
     const today=typeof todayLocalKey==="function"?todayLocalKey():new Date().toISOString().slice(0,10);
     const week=typeof weekMondayKey==="function"?weekMondayKey():today;
     const health=[
-      ["daily-"+today+"-food","Comí y atendí mi alimentación","Cuenta lo que pudiste resolver, sin perfeccionismo"],
+      ["daily-"+today+"-breakfast","Desayuné","Un primer paso de alimentación para este día"],
       ["daily-"+today+"-move","Moví mi cuerpo","Caminar, correr o hacer ejercicio a tu ritmo"],
       ["daily-"+today+"-rest","Me di tiempo para descansar","El descanso también es una acción valiosa"]
     ];
