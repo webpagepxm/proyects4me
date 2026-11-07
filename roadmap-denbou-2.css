@@ -236,3 +236,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
  html{scroll-behavior:auto}
  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:0ms!important}
 }
+
+/* Exact Denbou ring geometry and 600ms draw shader-like gradient. */
+.rv3-ring-progress,.rv3-ring-track{stroke-width:19}
+.rv3-ring-track{opacity:.12}
+.rv3-ring-progress{transform-origin:120px 120px;transform:rotate(-90deg);
+  animation:roadmap-denbou-ring-draw 600ms cubic-bezier(.22,1,.36,1) both}
+@keyframes roadmap-denbou-ring-draw{from{stroke-dashoffset:var(--ring-length)}}
+@media(prefers-reduced-motion:reduce){.rv3-ring-progress{animation:none}}
