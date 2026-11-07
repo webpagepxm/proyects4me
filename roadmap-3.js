@@ -545,3 +545,50 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
     "Callejero + Denbou: atribución QR por RP y permisos por validar"
   ].map(s=>'<div class="checkline"><span class="pill">Pendiente</span>'+escapeText(s)+'</div>').join("");
 })();
+
+
+// ROADMAP_BACKUP_IMPORT_V3 · Restauración segura, sin cambiar referencias reactivas.
+(function(){
+  const trigger=document.getElementById('importBackup');
+  const picker=document.getElementById('backupFile');
+  const status=document.getElementById('backupStatus');
+  if(!trigger||!picker||!status)return;
+  trigger.addEventListener('click',()=>picker.click());
+  picker.addEventListener('change',async()=>{
+    const file=picker.files&&picker.files[0];
+    if(!file)return;
+    try{
+      if(file.size>1000000)throw new Error('El respaldo supera 1 MB.');
+      const data=JSON.parse(await file.text());
+      if(!data||typeof data!=='object'||Array.isArray(data)||
+         !data.checks||typeof data.checks!=='object'||Array.isArray(data.checks))
+        throw new Error('El archivo no contiene un respaldo válido de ROADMAP.');
+      const checkEntries=Object.entries(data.checks);
+      if(checkEntries.length>10000||checkEntries.some(([id,v])=>id.length>200||typeof v!=='boolean'))
+        throw new Error('Las casillas del archivo no son válidas.');
+      const progress=data.integratedDenbouProgress??{};
+      if(typeof progress!=='object'||Array.isArray(progress)||
+        Object.entries(progress).some(([id,v])=>id.length>100||!Number.isFinite(+v)||Number(v)<0||Number(v)>100))
+        throw new Error('El progreso del archivo no es válido.');
+      const daily=data.daily??{};
+      if(typeof daily!=='object'||Array.isArray(daily))
+        throw new Error('El registro diario no es válido.');
+      const note=typeof data.note==='string'?data.note:'';
+      if(!confirm('¿Restaurar '+checkEntries.length+' marcas del respaldo? Se sustituirán las marcas, notas y estimaciones locales actuales.'))return;
+      const replace=(target,source)=>{Object.keys(target).forEach(k=>delete target[k]);Object.entries(source).forEach(([k,v])=>{if(k!=='__proto__'&&k!=='constructor'&&k!=='prototype')target[k]=v;});};
+      if(!state.checks||typeof state.checks!=='object')state.checks={};
+      replace(state.checks,data.checks);
+      if(!state.integratedDenbouProgress||typeof state.integratedDenbouProgress!=='object')state.integratedDenbouProgress={};
+      replace(state.integratedDenbouProgress,progress);
+      if(!state.daily||typeof state.daily!=='object')state.daily={};
+      replace(state.daily,daily);
+      state.note=note;
+      save();
+      document.getElementById('dailyNote').value=state.note;
+      render();
+      renderProjects();
+      status.textContent='Respaldo restaurado en este navegador. Puedes comprobar los avances en Proyectos.';
+    }catch(e){status.textContent='No se importó el archivo: '+(e&&e.message||'formato inválido');}
+    finally{picker.value='';}
+  });
+})();
