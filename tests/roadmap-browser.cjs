@@ -28,7 +28,7 @@ const url=process.env.ROADMAP_TEST_URL||'http://127.0.0.1:8000',key='mi-tablero-
  assert.equal(await page.locator('.director-now').count(),1);assert.ok(await page.locator('.director-next li').count()<=2);
  assert.equal(await page.locator('.director-now').getAttribute('data-director-kind'),'breakfast');
  assert.deepEqual(await saved(),seed,'Opening is read-only, including old records and estimates');
- await advance(10);assert.equal(await page.locator('.director-now').getAttribute('data-director-kind'),'movement');await advance(13);assert.equal(await page.locator('.director-now').getAttribute('data-director-kind'),'meal');assert.deepEqual(await saved(),seed,'Time does not fabricate completions');
+ await advance(11);assert.equal(await page.locator('.director-now').getAttribute('data-director-kind'),'movement');await advance(13);assert.equal(await page.locator('.director-now').getAttribute('data-director-kind'),'meal');assert.deepEqual(await saved(),seed,'Time does not fabricate completions');
  await advance(9);await page.locator('.director-now').evaluate(e=>e.dataset.marker='retained');await page.evaluate(()=>window.__directorTick());assert.equal(await page.locator('.director-now').getAttribute('data-marker'),'retained','Unchanged model keeps the same DOM');
  await page.locator('#personalRecords>summary').click();
  const breakfast=page.locator('#lifeIndicatorsV2 [data-task="daily-2026-11-08-breakfast"]');

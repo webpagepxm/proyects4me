@@ -19,5 +19,8 @@ jobs:
           node --check day-director.js
           node --check wellness-model.js
           node --check roadmap-3.js
+          node --check intelligence-ui.js
+          for file in intelligence/*.js; do node --check "$file"; done
           node tests/roadmap-smoke.cjs
           node tests/roadmap-time-aware.cjs
+          node tests/roadmap-intelligence.cjs

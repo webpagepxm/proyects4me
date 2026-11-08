@@ -30,6 +30,20 @@ function save(silent=false){
 const coachHost=document.getElementById('dayCoach');
 const settingsHost=document.getElementById('coachSettings');
 let renderedDayKey=todayLocalKey();
+const IntelligenceMemory=RoadmapIntelligence.MemoryAndPreferences;
+const intelligenceLoaded=IntelligenceMemory.load(localStorage);
+let readyToExpose=document.readyState!=='loading';
+document.addEventListener('DOMContentLoaded',()=>{readyToExpose=true;refreshOrientation();},{once:true});
+let intelligenceMemory=intelligenceLoaded.memory,intelligenceReadError=intelligenceLoaded.error,intelligenceUI=null,lastDecision=null,projectFacts=[],suspendExposure=false;
+function commitIntelligence(next,{remove=false}={}){
+ try{
+  if(remove)localStorage.removeItem(IntelligenceMemory.key);
+  else if(!IntelligenceMemory.save(localStorage,next))return false;
+  intelligenceMemory=IntelligenceMemory.normalize(next);intelligenceReadError=null;suspendExposure=remove;
+  preserveInteraction(()=>{renderDayCoach();renderWellness();});intelligenceUI?.refresh(true);return true;
+ }catch(error){return false;}
+}
+
 const textHTML=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function configuredDay(date){
  const key=RoadmapDayDirector.dateKey(date),usual=state.weeklySchedule?.[date.getDay()];
@@ -40,9 +54,18 @@ function currentOrientation(){
  previous.setDate(previous.getDate()-1);
  const entry=priorityQueue.find(([id])=>!state.checks[id]);
  const projectId=entry?(entry[0].includes('torre')?'torre':entry[0].includes('callejero')?'backstage':'backstage'):null;
- return RoadmapDayDirector.recommend({now,day:configuredDay(now),previousDay:configuredDay(previous),checks:state.checks,
+ const input={now,day:configuredDay(now),previousDay:configuredDay(previous),checks:IntelligenceMemory.projectChecks(state.checks,intelligenceMemory.records),
   priority:entry?{id:entry[0],projectId,name:projectId==='torre'?'Torre Fuerte':'Callejero + Denbou',title:entry[1],detail:entry[2]}:null,
-  personal:life,weekKey:weekMondayKey()});
+  personal:life,weekKey:weekMondayKey(),projectFacts};
+ const result=RoadmapIntelligence.RecommendationOrchestrator.recommend(input,intelligenceMemory);
+ lastDecision={...result.selection,trace:result.explain,balance:result.balance};
+ const home=document.getElementById('hoy');
+ const visible=coachHost?.getBoundingClientRect?.();
+ if(readyToExpose&&(!visible||visible.bottom>0&&visible.top<window.innerHeight)&&!document.hidden&&!home?.classList?.contains?.('hidden')&&!suspendExposure){
+  const updated=IntelligenceMemory.expose(intelligenceMemory,result.candidate,result.temporal);
+  if(updated!==intelligenceMemory){intelligenceMemory=updated;if(!intelligenceReadError)IntelligenceMemory.save(localStorage,intelligenceMemory);}
+ }
+ return {phase:result.phase,current:result.current,next:result.next,context:result.context,priority:result.priority,availableMinutes:result.availableMinutes};
 }
 function renderDayCoach(){
  if(!coachHost)return;
@@ -52,9 +75,9 @@ function renderDayCoach(){
  const date=document.getElementById('todayDate');
  if(date)date.textContent=new Date().toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'});
  if(coachHost.dataset.orientation!==signature){
-  coachHost.dataset.orientation=signature;
+  coachHost.dataset.orientation=signature;coachHost.classList.toggle('director-single',!model.next.length);
   coachHost.innerHTML='<div class="director-now" data-director-kind="'+model.current.kind+'" data-coach-phase="'+model.phase+'"><p class="eyebrow">Ahora</p><h2>'+textHTML(model.current.title)+'</h2><p>'+textHTML(model.current.detail)+'</p></div>'+
-   '<section class="director-next" aria-labelledby="nextTitle"><h2 id="nextTitle">Después</h2><ol>'+model.next.map(x=>'<li><strong>'+textHTML(x.title)+'</strong>'+(x.detail?'<p>'+textHTML(x.detail)+'</p>':'')+'</li>').join('')+'</ol>'+(model.context?'<p class="director-context">'+textHTML(model.context)+'</p>':'')+'</section>';
+   (model.next.length?'<section class="director-next" aria-labelledby="nextTitle"><h2 id="nextTitle">Después</h2><ol>'+model.next.map(x=>'<li><strong>'+textHTML(x.title)+'</strong>'+(x.detail?'<p>'+textHTML(x.detail)+'</p>':'')+'</li>').join('')+'</ol>'+(model.context?'<p class="director-context">'+textHTML(model.context)+'</p>':'')+'</section>':'');
  }
  const priority=document.getElementById('priorityList'),work=document.getElementById('homePriority');
  if(work)work.classList.toggle('hidden',!model.priority||model.current.kind==='project');
@@ -111,13 +134,17 @@ if(settingsHost){
 function refreshOrientation(){
  if(document.hidden)return;
  if(renderedDayKey!==todayLocalKey()){renderedDayKey=todayLocalKey();preserveInteraction(()=>{renderCalendar();render();});}
- else preserveInteraction(()=>{renderDayCoach();renderPersonalSettings();renderWellness();});
+ else preserveInteraction(()=>{renderDayCoach();renderPersonalSettings();renderWellness();intelligenceUI?.refresh();});
 }
 document.addEventListener('visibilitychange',refreshOrientation);
 if(typeof window.addEventListener==='function'){
  window.addEventListener('focus',refreshOrientation);
  window.addEventListener('pageshow',refreshOrientation);
  window.addEventListener('storage',event=>{
+  if(event.key===IntelligenceMemory.key){
+   const loaded=IntelligenceMemory.load(localStorage);const changed=JSON.stringify({...loaded.memory,exposure:null})!==JSON.stringify({...intelligenceMemory,exposure:null});intelligenceMemory=loaded.memory;intelligenceReadError=loaded.error;
+   if(changed)intelligenceUI?.closePrivate();preserveInteraction(()=>{renderDayCoach();renderWellness();});intelligenceUI?.refresh(true);return;
+  }
   if(event.key!==key)return;
   try{
    const incoming=JSON.parse(event.newValue||'{"checks":{},"note":""}');
@@ -139,7 +166,7 @@ if(typeof window.setInterval==='function')window.setInterval(refreshOrientation,
 let wellnessDays=7;
 function renderWellness(){
  const host=document.getElementById('wellnessSummary'),history=document.getElementById('wellnessHistory');if(!host||!history)return;
- const model=RoadmapWellness.summarize({checks:state.checks,now:new Date(),days:wellnessDays}),signature=JSON.stringify(model);
+ const model=RoadmapWellness.summarize({checks:IntelligenceMemory.projectChecks(state.checks,intelligenceMemory.records),now:new Date(),days:wellnessDays}),signature=JSON.stringify(model);
  if(host.dataset.model===signature)return;host.dataset.model=signature;
  const label=m=>m.ratio===null?'Sin datos':m.confirmed+' de '+m.expected+' registros confirmados';
  host.innerHTML='<p class="wellness-scope">Registros de hoy</p><div class="wellness-metrics">'+model.metrics.map(m=>{
@@ -199,7 +226,8 @@ function preserveInteraction(draw){
 document.addEventListener('change',e=>{if(e.target.dataset.task){
  state.checks[e.target.dataset.task]=e.target.checked;save();preserveInteraction(render);
 }});
-document.getElementById('tabs').addEventListener('click',e=>{let b=e.target.closest('button[data-tab]');if(!b)return;renderDayCoach();renderWellness();document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x===b));['hoy','semana','proyectos','wellness','revision','mas'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==b.dataset.tab));const mainTab=['semana','revision'].includes(b.dataset.tab)?'mas':b.dataset.tab;document.querySelectorAll('[data-side-nav]').forEach(x=>{const active=x.dataset.sideNav===mainTab;x.classList.toggle('active',active);if(active)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})});document.getElementById('dailyNote').value=state.note||'';document.getElementById('dailyNote').addEventListener('input',e=>{state.note=e.target.value;save()});function report(){let completed=all.flatMap(p=>p.tasks.map((t,i)=>({name:p.name,title:t[0],done:!!state.checks[p.id+'-'+i]}))).filter(t=>t.done);return `REPORTE DE MI TABLERO\nFecha: ${new Date().toLocaleDateString('es-MX')}\nCompletadas (${completed.length}):\n${completed.map(x=>'- '+x.name+': '+x.title).join('\n')||'Ninguna confirmada'}\n\nNOTAS:\n${state.note||'Sin notas'}\n\nAyúdame a replanear mis 3 prioridades y mis hábitos. No asumas tareas nuevas como terminadas.${dailyReport()}`}document.getElementById('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(report());document.getElementById('copyStatus').textContent='Reporte copiado. Pégalo en ChatGPT.'}catch(e){let a=document.createElement('textarea');a.value=report();document.body.append(a);a.select();document.execCommand('copy');a.remove();document.getElementById('copyStatus').textContent='Reporte seleccionado/copiadο; si falla, usa Exportar.'}});document.getElementById('export').addEventListener('click',()=>{let blob=new Blob([JSON.stringify({date:new Date().toISOString(),...state},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='respaldo-tablero.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});document.getElementById('reset').addEventListener('click',()=>{if(confirm('¿Descargar respaldo y después borrar registros locales?')){document.getElementById('export').click();Object.keys(state.checks||{}).forEach(k=>delete state.checks[k]);if(state.integratedDenbouProgress)Object.keys(state.integratedDenbouProgress).forEach(k=>delete state.integratedDenbouProgress[k]);if(state.daily)Object.keys(state.daily).forEach(k=>delete state.daily[k]);state.note='';save();document.getElementById('dailyNote').value='';render();renderProjects();}});document.getElementById('unknowns').innerHTML=['Alcance inicial de Callejero (41–42)','Detalles restantes de Slider Bros (62–70)','Sector prioritario de la agencia (72)','Rutina y método de estudio adicional (133–140)'].map(x=>`<div class="checkline"><span class="pill">Pendiente</span>${x}</div>`).join('');renderCalendar();render();
+document.getElementById('tabs').addEventListener('click',e=>{let b=e.target.closest('button[data-tab]');if(!b)return;if(b.dataset.tab!=='mas')intelligenceUI?.closePrivate();renderDayCoach();renderWellness();document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x===b));['hoy','semana','proyectos','wellness','revision','mas'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==b.dataset.tab));const mainTab=['semana','revision'].includes(b.dataset.tab)?'mas':b.dataset.tab;document.querySelectorAll('[data-side-nav]').forEach(x=>{const active=x.dataset.sideNav===mainTab;x.classList.toggle('active',active);if(active)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});if(b.dataset.tab==='hoy')renderDayCoach();intelligenceUI?.refresh();window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})});document.getElementById('dailyNote').value=state.note||'';document.getElementById('dailyNote').addEventListener('input',e=>{state.note=e.target.value;save()});function report(){let completed=all.flatMap(p=>p.tasks.map((t,i)=>({name:p.name,title:t[0],done:!!state.checks[p.id+'-'+i]}))).filter(t=>t.done);return `REPORTE DE MI TABLERO\nFecha: ${new Date().toLocaleDateString('es-MX')}\nCompletadas (${completed.length}):\n${completed.map(x=>'- '+x.name+': '+x.title).join('\n')||'Ninguna confirmada'}\n\nNOTAS:\n${state.note||'Sin notas'}\n\nAyúdame a replanear mis 3 prioridades y mis hábitos. No asumas tareas nuevas como terminadas.${dailyReport()}`}document.getElementById('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(report());document.getElementById('copyStatus').textContent='Reporte copiado. Pégalo en ChatGPT.'}catch(e){let a=document.createElement('textarea');a.value=report();document.body.append(a);a.select();document.execCommand('copy');a.remove();document.getElementById('copyStatus').textContent='Reporte seleccionado/copiadο; si falla, usa Exportar.'}});document.getElementById('export').addEventListener('click',()=>{let blob=new Blob([JSON.stringify({date:new Date().toISOString(),...state},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='respaldo-tablero.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});document.getElementById('reset').addEventListener('click',()=>{if(confirm('¿Descargar respaldo y después borrar registros locales?')){document.getElementById('export').click();Object.keys(state.checks||{}).forEach(k=>delete state.checks[k]);if(state.integratedDenbouProgress)Object.keys(state.integratedDenbouProgress).forEach(k=>delete state.integratedDenbouProgress[k]);if(state.daily)Object.keys(state.daily).forEach(k=>delete state.daily[k]);state.note='';save();document.getElementById('dailyNote').value='';render();renderProjects();}});document.getElementById('unknowns').innerHTML=['Alcance inicial de Callejero (41–42)','Detalles restantes de Slider Bros (62–70)','Sector prioritario de la agencia (72)','Rutina y método de estudio adicional (133–140)'].map(x=>`<div class="checkline"><span class="pill">Pendiente</span>${x}</div>`).join('');intelligenceUI=RoadmapIntelligenceUI.mount({document,storage:localStorage,Memory:IntelligenceMemory,getMemory:()=>intelligenceMemory,commit:commitIntelligence,getDecision:()=>lastDecision,getProjects:()=>projects.filter(p=>p.id!=='callejero'),readError:()=>intelligenceReadError});
+renderCalendar();render();
 
 document.addEventListener('click',function(event){
  const b=event.target.closest('[data-side-nav]');if(!b)return;
@@ -606,7 +634,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
   }
   function renderIndicators(){
     const today=todayLocalKey(),week=weekMondayKey();
-    const health=[['daily-'+today+'-teeth','Higiene y agua','Registro de hoy'],['daily-'+today+'-breakfast','Desayuno','Registro de hoy'],['daily-'+today+'-move','Movimiento','Registro de hoy'],['daily-'+today+'-food','Comida y pausa','Registro de hoy'],['daily-'+today+'-read','Lectura','Registro de hoy'],['daily-'+today+'-rest','Descanso','Registro de hoy']];
+    const health=[['daily-'+today+'-teeth','Higiene y agua','Registro de hoy'],['daily-'+today+'-breakfast','Desayuno','Registro de hoy'],['daily-'+today+'-move','Movimiento','Registro de hoy'],['daily-'+today+'-food','Comida y pausa','Registro de hoy'],['daily-'+today+'-read','Lectura','Registro de hoy'],['daily-'+today+'-rest','Descanso','Registro de hoy'],['daily-'+today+'-dinner','Cena','Registro de hoy'],['daily-'+today+'-nightTeeth','Higiene nocturna','Registro de hoy']];
     const connections=[['contact-week-'+week+'-papa','Hablar con papá','Esta semana'],['contact-week-'+week+'-mama','Hablar con mamá','Esta semana'],['contact-week-'+week+'-amigos','Conectar con una amistad','Esta semana']];
     indicatorsHost.innerHTML='<section class="life-section"><h2>Salud</h2>'+health.map(x=>taskHTML(...x)).join('')+'</section><section class="life-section"><h2>Vínculos</h2>'+connections.map(x=>taskHTML(...x)).join('')+'</section>';
   }
@@ -616,6 +644,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
     const expanded=Array.from(projectHost.querySelectorAll("details"),el=>el.open);
     const focusedTask=document.activeElement?.dataset?.task;
     const term=(filter.value||"").trim().toLocaleLowerCase("es-MX");
+    projectFacts=projects.filter(p=>p.id!=='callejero').map(p=>({id:p.id,name:p.name,active:roadmap[p.id]?.mode==='Activo'||roadmap[p.id]?.mode==='Seguimiento',progress:p.id==='backstage'?integratedOverall():projectInfo(p).progress}));
     const overall=renderPortfolio();
     renderIndicators(overall);
     const projectCards=projects.map(project=>{
@@ -641,7 +670,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
     projectHost.innerHTML=projectCards.join('');
     if(previousProjectTerm===term)projectHost.querySelectorAll('details').forEach((el,i)=>{if(i<expanded.length)el.open=expanded[i];});
     previousProjectTerm=term;
-    renderDirectory();showProject(currentProjectId,false);
+    renderDirectory();showProject(currentProjectId,false);renderDayCoach();
     if(focusedTask){const replacement=Array.from(projectHost.querySelectorAll('[data-task]')).find(el=>el.dataset.task===focusedTask);if(replacement)replacement.focus({preventScroll:true});}
   }
 
