@@ -153,6 +153,8 @@ function renderDayCoach(){
    '<div class="coach-wake"><span>¿Acabas de despertar?</span>'+
    '<div><button type="button" data-coach-action="woke">Sí</button>'+
    '<button type="button" data-coach-action="awake">No</button></div></div>':'';
+ const priorSchedule=coachHost.querySelector('.coach-schedule');
+ const scheduleOpen=priorSchedule?priorSchedule.open:(phase==='morning'||phase==='afternoon');
  const outline=phase==='night'?'Rutina de noche':
    phase==='late'?'Ver la tarde':'Horario hasta '+coachClock(effectiveEnd);
  const mark=nextCare?
@@ -162,7 +164,7 @@ function renderDayCoach(){
    '<span class="coach-clock">'+coachClock(now)+'</span></div>'+
    '<div class="coach-next"><span>AHORA</span><strong>'+title+'</strong>'+mark+'</div>'+
    wakePrompt+
-   '<details class="coach-schedule"><summary>'+outline+'</summary>'+
+   '<details class="coach-schedule"'+(scheduleOpen?' open':'')+'><summary>'+outline+'</summary>'+
    '<div class="coach-slots">'+(rows||'<p>Descansa.</p>')+'</div></details>'+
    '<details class="coach-settings"><summary>Ajustar horario</summary>'+
    '<div class="coach-setting-row"><label for="coachDeparture">Hora de salida</label>'+

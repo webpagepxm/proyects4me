@@ -18,7 +18,7 @@ Las implementaciones anteriores de CSS/JS fueron eliminadas de `main` y permanec
 
 ## Diseño de producto
 
-- **Hoy:** una prioridad visible, hasta dos adicionales desplegables, tres anillos personales y una sección simple de autocuidado.
+- **Hoy:** la guía personal por horario es lo primero que se ve (higiene, desayuno, movimiento, comida, horario hasta salir); la misión de proyectos y el portafolio quedan debajo. La agenda completa puede contraerse.
 - **Proyectos:** Callejero + Denbou unificados (cinco áreas visuales, diez etapas subyacentes, tareas intactas), Torre Fuerte y proyectos secundarios bajo «En espera».
 - **Mi vida:** tres temas principales y detalles de hábitos a petición.
 - **Más:** planificación semanal, revisión, notas, respaldos y guía diaria.
@@ -35,7 +35,7 @@ La pantalla **Hoy** muestra una sola acción sugerida y una misión principal. N
 
 Al abrirse por la mañana, ROADMAP **pregunta** si la persona acaba de despertar; nunca transforma automáticamente la hora de apertura en hora real de despertar. La referencia inicial de salida es **15:30**, editable día a día. Las preferencias diarias se guardan en el navegador, sin sincronización externa ni notificaciones automáticas.
 
-La agenda completa y los tres anillos siguen disponibles mediante secciones desplegables para evitar la saturación.
+La agenda recomendada se abre automáticamente al entrar por la mañana o por la tarde, aunque puede contraerse; conserva su estado mientras se marca una acción. Los tres anillos siguen en la sección de vida personal.
 
 ## Datos y seguridad
 
@@ -60,7 +60,7 @@ Antes de cambios visuales: revisar el diseño de Denbou, evitar añadir CSS nume
 
 ## Universo visual (noviembre 2026)
 
-La portada reúne misión, portafolio estimado y acceso directo a los seis proyectos visibles. Los objetos originales usan CSS, sin imágenes externas ni librerías 3D. Los hábitos y la guía horaria siguen en Mi vida y Más. Las etapas mantienen una lista nativa de desplegables, sin imponer dependencias nuevas. Las tareas conservan sus identificadores, los desplegables abiertos y el foco al actualizarse.
+La portada reúne misión, portafolio estimado y acceso directo a los seis proyectos visibles. Los objetos originales usan CSS, sin imágenes externas ni librerías 3D. La guía contextual ha vuelto al primer lugar de Hoy; los hábitos detallados siguen en Mi vida y Más. Las etapas mantienen una lista nativa de desplegables, sin imponer dependencias nuevas. Las tareas conservan sus identificadores, los desplegables abiertos y el foco al actualizarse.
 
 La clave local, las tareas originales, los porcentajes iniciales y la fórmula del portafolio (70% integrado, 30% Torre Fuerte) se conservan. Si falla una escritura, se restaura el último estado guardado y se muestra un error; importar tampoco anuncia éxito si no se pudo guardar. La app no puede leer ni respaldar desde el entorno cloud los datos privados que ya existen en otros navegadores.
 

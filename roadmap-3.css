@@ -541,3 +541,15 @@ h1,h2,h3,.sidebrand-name{font-family:'Arial Black','Avenir Next',sans-serif;lett
 .universe-method p{color:#C1C6B4}
 .rv3-roadmap-stage>summary>[data-merged-stage-pct]{color:#435926}.rv3-life-shell{--ink:#F3F1E7;--muted:#C1C6B4;--faint:#C1C6B4}.rv3-life-shell .rv3-kicker,.rv3-life-heading p,.rv3-life-shell .rv3-ring-note{color:#C1C6B4}.daily-guide .day-coach{background:#FAF9F3;color:#24271F;border:1px solid #D5D5C9}.day-coach h2,.coach-schedule>summary,.coach-settings>summary,.coach-setting-row label,.coach-setting-row>span,.coach-slot-copy b,.coach-wake>span{color:#24271F}.coach-slot-time{color:#435926}.coach-schedule>summary span,.coach-slot-copy small{color:#626459}.coach-settings,.coach-schedule,.coach-slot,.coach-setting-row{border-color:#D5D5C9}.coach-setting-row input[type=time]{background:#FAF9F3;color:#24271F;color-scheme:light}.coach-hint,.coach-disclaimer{color:#626459!important}
 .roadmap-more-tile>.roadmap-icon:first-child,.roadmap-routine>summary>.roadmap-icon{color:#526E2C}
+
+/* Restore the daily coach as the primary Home experience after the universe redesign. */
+.roadmap-home-coach{margin:0 0 26px;max-width:100%}
+#hoy .roadmap-home-coach .day-coach{margin:0;padding:20px 24px 13px;box-shadow:none}
+#hoy .roadmap-home-coach .coach-head .eyebrow{color:#435926}
+#hoy .roadmap-home-coach .coach-clock{background:#E6E9DD;color:#344A35}
+#hoy .roadmap-home-coach .coach-next{background:#E8EDD9}
+#hoy .roadmap-home-coach .coach-next>span{color:#536C31}
+#hoy .roadmap-home-coach .coach-next>strong{color:#25372A}
+#hoy .roadmap-home-coach .coach-done{background:#2F4937;color:#FFF}
+#hoy .roadmap-home-coach .coach-done:hover{background:#446449}
+@media(max-width:780px){#hoy .roadmap-home-coach{margin-bottom:18px}#hoy .roadmap-home-coach .day-coach{padding:16px 16px 10px}}
