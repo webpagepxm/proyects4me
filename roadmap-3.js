@@ -14,10 +14,10 @@ const priorityQueue=[['backstage-11','Callejero + Denbou · comprobar acceso des
 const quick=[['writing-0','Escritura · 30 minutos'],['exercise-0','Ejercicio · primera sesión'],['food-0','Lista de súper'],['money-0','Próximos pagos']];
 const weekly=[['writing-0','Escritura · sesión 1'],['writing-1','Escritura · sesión 2'],['writing-2','Escritura · sesión 3'],['exercise-0','Movimiento · sesión 1'],['exercise-1','Movimiento · sesión 2'],['food-0','Lista de súper'],['personal-0','Contacto con familia'],['personal-1','Contacto con amistad']];
 const key='mi-tablero-personal-v1';let state={checks:{},note:''};try{state={...state,...JSON.parse(localStorage.getItem(key)||'{}')}}catch(e){};let lastSavedState=JSON.stringify(state);
-function save(){
+function save(silent=false){
  const status=document.getElementById('saveStatus');
  try{const serialized=JSON.stringify(state);localStorage.setItem(key,serialized);lastSavedState=serialized;
- if(status){status.textContent='Guardado en este navegador';status.className='save-status is-saved';}return true;
+ if(status&&!silent){status.textContent='Guardado en este navegador';status.className='save-status is-saved';}return true;
  }catch(error){
  // Restore in place: existing renderer references must keep pointing at the same objects.
  const restore=(target,source)=>{Object.keys(target).forEach(k=>{if(!(k in source)){if(target[k]&&typeof target[k]==='object'&&!Array.isArray(target[k]))restore(target[k],{});else delete target[k];}});Object.keys(source).forEach(k=>{
@@ -115,10 +115,10 @@ function renderDayCoach(){
  const phase=(now<360||now>=21*60)?'night':
    now<720?'morning':now<effectiveEnd?'afternoon':'late';
  if(phase==='morning'&&!Number.isFinite(+day.coachMorningOpenedAt)){
-   day.coachMorningOpenedAt=now;save();
+   day.coachMorningOpenedAt=now;save(true);
  }
  if(phase==='afternoon'&&!Number.isFinite(+day.coachAfternoonOpenedAt)){
-   day.coachAfternoonOpenedAt=now;save();
+   day.coachAfternoonOpenedAt=now;save(true);
  }
  const availableWork=priorityQueue.filter(x=>!state.checks[x[0]]);
  const first=availableWork[0];
@@ -128,7 +128,7 @@ function renderDayCoach(){
    phase==='afternoon'&&now>=13*60&&!done('food')?['food','Come algo']:null;
  const title=nextCare?nextCare[1]:phase==='night'?(now<360?'Descansa':'Deja el teléfono'):
    phase==='late'?(shift===true?'Ve a trabajar':'Cierra tu día'):'Avanza en tu proyecto';
- const periodNames={morning:'MAÑANA',afternoon:'ANTES DE SALIR',late:'TARDE',night:'NOCHE'};
+ const periodNames={morning:'Mañana',afternoon:'Antes de salir',late:'Tarde',night:'Noche'};
  const savedOpening=phase==='morning'?day.coachMorningOpenedAt:phase==='afternoon'?day.coachAfternoonOpenedAt:now;
  const opening=Number.isFinite(+savedOpening)?+savedOpening:now;
  const start=Math.max(360,Math.min(now,opening));
@@ -154,30 +154,31 @@ function renderDayCoach(){
    '<div><button type="button" data-coach-action="woke">Sí</button>'+
    '<button type="button" data-coach-action="awake">No</button></div></div>':'';
  const priorSchedule=coachHost.querySelector('.coach-schedule');
- const scheduleOpen=priorSchedule?priorSchedule.open:(phase==='morning'||phase==='afternoon');
+ const scheduleOpen=priorSchedule?priorSchedule.open:true;
  const outline=phase==='night'?'Rutina de noche':
    phase==='late'?'Ver la tarde':'Horario hasta '+coachClock(effectiveEnd);
  const essentials=phase==='night'?'':
    '<div class="coach-essentials" aria-label="Cuidados de hoy">'+
-   [['teeth','Dientes'],['breakfast','Desayuno'],['move','Movimiento']].map(([id,label])=>
+   [['teeth','Lavarme los dientes y tomar agua'],['breakfast','Desayunar'],['move','Moverme / hacer ejercicio'],['food','Comer y hacer una pausa']].map(([id,label])=>
      '<label class="coach-essential"><input type="checkbox" data-task="daily-'+key+'-'+id+'" '+(done(id)?' checked':'')+'><span>'+label+'</span></label>'
    ).join('')+'</div>';
  const mark=nextCare?
    '<button type="button" class="coach-done" data-coach-action="done" data-coach-check="'+nextCare[0]+'">Hecho</button>':'';
  coachHost.innerHTML=
-   '<div class="coach-head"><span class="eyebrow">HOY · '+periodNames[phase]+'</span>'+
-   '<span class="coach-clock">'+coachClock(now)+'</span></div>'+
-   '<div class="coach-next"><span>AHORA</span><strong>'+title+'</strong>'+mark+'</div>'+
-   essentials+
+   '<div class="coach-head" data-coach-phase="'+phase+'"><span class="eyebrow">'+periodNames[phase]+'</span>'+
+   '<time class="coach-clock">'+coachClock(now)+'</time></div>'+
+   '<div class="coach-next" role="status"><span>Ahora</span><strong>'+title+'</strong>'+mark+'</div>'+
    wakePrompt+
+   essentials+
+   (phase==='night'?'<div class="coach-rest">'+taskHTML('daily-'+key+'-read','Leer un rato')+taskHTML('daily-'+key+'-rest','Prepararme para descansar')+'</div>':'')+
    '<details class="coach-schedule"'+(scheduleOpen?' open':'')+'><summary>'+outline+'</summary>'+
    '<div class="coach-slots">'+(rows||'<p>Descansa.</p>')+'</div></details>'+
-   '<details class="coach-settings"><summary>Ajustar horario</summary>'+
+   '<div class="coach-settings"><h2>Tu horario</h2>'+
    '<div class="coach-setting-row"><label for="coachDeparture">Hora de salida</label>'+
    '<input id="coachDeparture" data-coach-departure type="time" value="'+coachClock(departure)+'"></div>'+
    '<div class="coach-setting-row"><span>¿Trabajas hoy?</span><div class="coach-shift-choices">'+
    '<button type="button" data-coach-action="shift-yes" aria-pressed="'+(shift===true)+'">Sí</button>'+
-   '<button type="button" data-coach-action="shift-no" aria-pressed="'+(shift===false)+'">No</button></div></div></details>';
+   '<button type="button" data-coach-action="shift-no" aria-pressed="'+(shift===false)+'">No</button></div></div></div>';
 }
 if(coachHost){
  coachHost.addEventListener('click',event=>{
@@ -193,17 +194,16 @@ if(coachHost){
    const id=button.dataset.coachCheck;
    if(!['teeth','breakfast','move','food'].includes(id))return;
    state.checks['daily-'+todayLocalKey()+'-'+id]=true;
-   save();render();return;
+   save();preserveInteraction(render);return;
   }else return;
-  save();renderDayCoach();
-  if(action==='shift-yes'||action==='shift-no')renderDailyPlan();
+  save();preserveInteraction(()=>{renderDayCoach();if(action==='shift-yes'||action==='shift-no')renderDailyPlan();});
  });
  coachHost.addEventListener('change',event=>{
   const time=event.target.closest('[data-coach-departure]');
   if(!time)return;
   if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(time.value))return;
   const day=todayCheckin();day.coachDeparture=time.value;
-  save();renderDailyPlan();
+  save();preserveInteraction(renderDailyPlan);
  });
  document.addEventListener('visibilitychange',()=>{
   if(!document.hidden)renderDayCoach();
@@ -213,8 +213,25 @@ if(coachHost){
 
 function render(){const total=all.reduce((a,p)=>a+p.tasks.length,0),done=all.reduce((a,p)=>a+p.tasks.filter((_,i)=>state.checks[p.id+'-'+i]).length,0);document.getElementById('stats').innerHTML=`<div class="card stat"><div class="eyebrow">Tareas registradas</div><strong>${total}</strong><small class="muted">Sin asumir completadas</small></div><div class="card stat"><div class="eyebrow">Confirmadas</div><strong>${done}</strong><small class="muted">Marcadas por ti</small></div><div class="card stat"><div class="eyebrow">Avance</div><strong>${Math.round(done/total*100)}%</strong><small class="muted">Del checklist inicial</small></div>`;const next=priorityQueue.filter(([id])=>!state.checks[id]).slice(0,3);document.getElementById('priorityList').innerHTML=next.length?next.map(([id,title,sub])=>taskHTML(id,title,sub)).join(''):'<p class="mini muted">Completaste el foco inicial. Abre Proyectos y prepara la siguiente revisión conmigo.</p>';document.getElementById('quickTasks').innerHTML=quick.map(([id,title])=>taskHTML(id,title)).join('');document.getElementById('weeklyTasks').innerHTML=weekly.map(([id,title])=>taskHTML(id,title)).join('')+taskHTML(runWeeklyId(),'Correr una vez esta semana','20–30 min o trotar/caminar');document.getElementById('lifeTasks').innerHTML=life.flatMap(p=>p.tasks.map((t,i)=>taskHTML(p.id+'-'+i,t[0],p.name+' · '+t[1]))).join('');document.getElementById('lifeCards').innerHTML=life.map(p=>`<div class="card"><div class="eyebrow">${p.name}</div><p class="mini muted">${p.sub}</p><div class="bar"><div class="fill" style="width:${progress(p)}%"></div></div><div class="row"><small class="muted">${progress(p)}% del checklist</small><span class="tag">${p.tasks.length} pasos</span></div></div>`).join('');renderProjects();renderDailyPlan()}
 function renderProjects(){ /* reemplazado por renderer único */ }
-document.addEventListener('change',e=>{if(e.target.dataset.task){state.checks[e.target.dataset.task]=e.target.checked;save();render()}});
-document.getElementById('tabs').addEventListener('click',e=>{let b=e.target.closest('button[data-tab]');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x===b));['hoy','semana','proyectos','vida','revision','mas'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==b.dataset.tab));const mainTab=['semana','revision'].includes(b.dataset.tab)?'mas':b.dataset.tab;document.querySelectorAll('[data-side-nav]').forEach(x=>{const active=x.dataset.sideNav===mainTab;x.classList.toggle('active',active);if(active)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})});document.getElementById('dailyNote').value=state.note||'';document.getElementById('dailyNote').addEventListener('input',e=>{state.note=e.target.value;save()});function report(){let completed=all.flatMap(p=>p.tasks.map((t,i)=>({name:p.name,title:t[0],done:!!state.checks[p.id+'-'+i]}))).filter(t=>t.done);return `REPORTE DE MI TABLERO\nFecha: ${new Date().toLocaleDateString('es-MX')}\nCompletadas (${completed.length}):\n${completed.map(x=>'- '+x.name+': '+x.title).join('\n')||'Ninguna confirmada'}\n\nNOTAS:\n${state.note||'Sin notas'}\n\nAyúdame a replanear mis 3 prioridades y mis hábitos. No asumas tareas nuevas como terminadas.${dailyReport()}`}document.getElementById('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(report());document.getElementById('copyStatus').textContent='Reporte copiado. Pégalo en ChatGPT.'}catch(e){let a=document.createElement('textarea');a.value=report();document.body.append(a);a.select();document.execCommand('copy');a.remove();document.getElementById('copyStatus').textContent='Reporte seleccionado/copiadο; si falla, usa Exportar.'}});document.getElementById('export').addEventListener('click',()=>{let blob=new Blob([JSON.stringify({date:new Date().toISOString(),...state},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='respaldo-tablero.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});document.getElementById('reset').addEventListener('click',()=>{if(confirm('¿Descargar respaldo y después borrar registros locales?')){document.getElementById('export').click();Object.keys(state.checks||{}).forEach(k=>delete state.checks[k]);if(state.integratedDenbouProgress)Object.keys(state.integratedDenbouProgress).forEach(k=>delete state.integratedDenbouProgress[k]);if(state.daily)Object.keys(state.daily).forEach(k=>delete state.daily[k]);state.note='';save();document.getElementById('dailyNote').value='';render();renderProjects();}});document.getElementById('unknowns').innerHTML=['Alcance inicial de Callejero (41–42)','Detalles restantes de Slider Bros (62–70)','Sector prioritario de la agencia (72)','Rutina y método de estudio adicional (133–140)'].map(x=>`<div class="checkline"><span class="pill">Pendiente</span>${x}</div>`).join('');const now=new Date();document.getElementById('todayDate').textContent=now.toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'});const monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));document.getElementById('weekDays').innerHTML=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map((n,i)=>{let d=new Date(monday);d.setDate(monday.getDate()+i);return `<div class="day" style="${d.toDateString()===now.toDateString()?'border-color:#74864C;background:#E0E8CE':''}">${n}<strong>${d.getDate()}</strong><span class="muted">${d.toLocaleDateString('es-MX',{month:'short'})}</span></div>`}).join('');render();
+function preserveInteraction(draw){
+ const active=document.activeElement;
+ const identity=active&&{id:active.id,task:active.dataset?.task,action:active.dataset?.coachAction,ring:active.dataset?.ring,inCoach:!!active.closest?.('#dayCoach')};
+ const position={top:window.scrollY||0,left:window.scrollX||0};
+ const details=Array.from(document.querySelectorAll('details'),el=>el.open);
+ draw();
+ document.querySelectorAll('details').forEach((el,i)=>{if(i<details.length)el.open=details[i];});
+ let target=identity&&(identity.id?document.getElementById(identity.id):
+  Array.from(document.querySelectorAll('input[data-task],button[data-coach-action],button[data-ring]')).find(el=>
+   identity.task?el.dataset.task===identity.task:identity.action?el.dataset.coachAction===identity.action:identity.ring&&el.dataset.ring===identity.ring));
+ if(!target&&identity?.inCoach)target=document.querySelector('.coach-next');
+ if(!target&&identity?.task)target=document.querySelector('#priorityList input[data-task]')||document.getElementById('missionTitle');
+ if(target){if(!target.matches?.('input,button,a,textarea,select'))target.setAttribute('tabindex','-1');target.focus({preventScroll:true});}
+ window.scrollTo(position);
+}
+document.addEventListener('change',e=>{if(e.target.dataset.task){
+ state.checks[e.target.dataset.task]=e.target.checked;save();preserveInteraction(render);
+}});
+document.getElementById('tabs').addEventListener('click',e=>{let b=e.target.closest('button[data-tab]');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x===b));['hoy','semana','proyectos','vida','revision','mas'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==b.dataset.tab));const mainTab=['semana','revision'].includes(b.dataset.tab)?'mas':b.dataset.tab;document.querySelectorAll('[data-side-nav]').forEach(x=>{const active=x.dataset.sideNav===mainTab;x.classList.toggle('active',active);if(active)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})});document.getElementById('dailyNote').value=state.note||'';document.getElementById('dailyNote').addEventListener('input',e=>{state.note=e.target.value;save()});function report(){let completed=all.flatMap(p=>p.tasks.map((t,i)=>({name:p.name,title:t[0],done:!!state.checks[p.id+'-'+i]}))).filter(t=>t.done);return `REPORTE DE MI TABLERO\nFecha: ${new Date().toLocaleDateString('es-MX')}\nCompletadas (${completed.length}):\n${completed.map(x=>'- '+x.name+': '+x.title).join('\n')||'Ninguna confirmada'}\n\nNOTAS:\n${state.note||'Sin notas'}\n\nAyúdame a replanear mis 3 prioridades y mis hábitos. No asumas tareas nuevas como terminadas.${dailyReport()}`}document.getElementById('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(report());document.getElementById('copyStatus').textContent='Reporte copiado. Pégalo en ChatGPT.'}catch(e){let a=document.createElement('textarea');a.value=report();document.body.append(a);a.select();document.execCommand('copy');a.remove();document.getElementById('copyStatus').textContent='Reporte seleccionado/copiadο; si falla, usa Exportar.'}});document.getElementById('export').addEventListener('click',()=>{let blob=new Blob([JSON.stringify({date:new Date().toISOString(),...state},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='respaldo-tablero.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});document.getElementById('reset').addEventListener('click',()=>{if(confirm('¿Descargar respaldo y después borrar registros locales?')){document.getElementById('export').click();Object.keys(state.checks||{}).forEach(k=>delete state.checks[k]);if(state.integratedDenbouProgress)Object.keys(state.integratedDenbouProgress).forEach(k=>delete state.integratedDenbouProgress[k]);if(state.daily)Object.keys(state.daily).forEach(k=>delete state.daily[k]);state.note='';save();document.getElementById('dailyNote').value='';render();renderProjects();}});document.getElementById('unknowns').innerHTML=['Alcance inicial de Callejero (41–42)','Detalles restantes de Slider Bros (62–70)','Sector prioritario de la agencia (72)','Rutina y método de estudio adicional (133–140)'].map(x=>`<div class="checkline"><span class="pill">Pendiente</span>${x}</div>`).join('');const now=new Date();document.getElementById('todayDate').textContent=now.toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'});const monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));document.getElementById('weekDays').innerHTML=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map((n,i)=>{let d=new Date(monday);d.setDate(monday.getDate()+i);return `<div class="day" style="${d.toDateString()===now.toDateString()?'border-color:#C4F54C;background:#202619':''}">${n}<strong>${d.getDate()}</strong><span class="muted">${d.toLocaleDateString('es-MX',{month:'short'})}</span></div>`}).join('');render();
 
 document.addEventListener('click',function(event){
  const b=event.target.closest('[data-side-nav]');if(!b)return;
@@ -400,10 +417,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
     const items=steps.flatMap(s=>getItems(project,s));
     return {progress:value,completed:items.filter(t=>!!state.checks[t.id]).length,total:items.length};
   }
-  function progressBar(value,title,compact) {
-    const v=Math.max(0,Math.min(100,Number(value)||0));
-    return '<div class="rv2-bar'+(compact?' rv2-bar-small':'')+'" role="progressbar" aria-label="'+escapeText(title)+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+v+'"><span style="width:'+v+'%"></span></div>';
-  }
+
   const projectHost=document.getElementById("projects");
   const lifeHost=document.getElementById("lifeTasks");
   const filter=document.getElementById("filter");
@@ -460,7 +474,6 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
         const stat=stageInfo(p,step);
         return '<details class="rv2-stage"><summary><span><b>'+escapeText(step.name)+'</b><small>'+
           stat.completed+'/'+stat.items.length+' marcados</small></span><strong>'+stat.progress+'%</strong></summary>'+
-          progressBar(stat.progress,p.name+": "+step.name,true)+
           '<div class="rv2-stage-tasks">'+stat.items.map(t=>taskHTML(t.id,t.title,t.context)).join("")+'</div></details>';
       }).join("")+'</div></details>';
   }
@@ -487,7 +500,6 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
         '<summary><span class="rv3-roadmap-ord">'+String(integratedStages.indexOf(s)+1).padStart(2,"0")+'</span>'+
         '<span class="rv3-roadmap-stage-name"><b>'+escapeText(s.name)+'</b><small>Peso '+s.w+'% del ecosistema</small></span>'+
         '<strong data-merged-stage-pct="'+s.id+'">'+value+'%</strong><span class="rv3-roadmap-arrow" aria-hidden="true"><svg class="roadmap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>'+
-        '<div class="rv3-roadmap-stage-progress">'+progressBar(value,s.name+": avance estimado",true)+'</div>'+
         '<div class="rv3-roadmap-stage-body"><p>'+escapeText(s.desc)+'</p>'+tasks+'</div></details>';
     });
     const groups=[
@@ -500,25 +512,24 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
     const stages=groups.map(g=>{
       const members=g.members.map(id=>integratedStages.find(s=>s.id===id)).filter(s=>s&&shown.includes(s));
       if(!members.length)return "";
-      const weight=members.reduce((n,s)=>n+s.w,0);
-      const value=Math.round(members.reduce((n,s)=>n+s.w*integratedStageProgress(s),0)/weight);
-      return '<details class="rv3-workstream" '+(term?'open':'')+'><summary><span>'+escapeText(g.name)+'</span><strong>'+value+'%</strong></summary>'+
-        progressBar(value,g.name+": progreso estimado",true)+
+      const scope=g.members.map(id=>integratedStages.find(s=>s.id===id)).filter(Boolean);
+      const weight=scope.reduce((n,s)=>n+s.w,0);
+      const value=Math.round(scope.reduce((n,s)=>n+s.w*integratedStageProgress(s),0)/weight);
+      return '<details class="rv3-workstream" '+(term?'open':'')+'><summary><span>'+escapeText(g.name)+'</span><strong data-stage-members="'+g.members.join(',')+'">'+value+'%</strong></summary>'+
         '<div class="rv3-workstream-detail">'+members.map(s=>stageNodes[shown.indexOf(s)]).join("")+'</div></details>';
     }).join("");
     const p=integratedOverall();
-    return '<article id="project-backstage" class="card rv2-project rv3-roadmap-integrated" data-project-id="backstage" tabindex="-1" data-merged-card>'+
-      '<div class="rv2-project-head"><div><div class="eyebrow">PRIORIDAD 1 · PROYECTO INTEGRADO</div>'+
-      '<h3>Callejero + Denbou</h3><p>Captación pública y operaciones privadas: dos productos unidos por permisos, sin mezclar la propiedad de los datos.</p></div>'+
-      '<span class="rv2-percent" data-merged-total>'+p+'%</span></div>'+
-      '<div class="project-current"><span><small>ETAPA POR AVANZAR</small><b>'+escapeText((integratedStages.find(s=>integratedStageProgress(s)<100)||{name:'Etapas al 100% estimado'}).name)+'</b></span><span><small>SIGUIENTE ACCIÓN</small><b>'+escapeText((priorityQueue.find(x=>!state.checks[x[0]]&&x[0].includes('backstage'))||['','Revisar entregables y validar producción'])[1])+'</b></span></div>'+
-      '<div data-merged-mainbar>'+progressBar(p,"Avance estimado Callejero y Denbou",false)+'</div>'+
-      '<p class="rv3-roadmap-disclaimer">Porcentajes iniciales del tablero acordado (7 nov 2026). Son estimaciones, no pruebas de producción.</p>'+
+    return '<article id="project-backstage" class="rv2-project rv3-roadmap-integrated" data-project-id="backstage" tabindex="-1" data-merged-card>'+
+      '<div class="rv2-project-head"><div><div class="eyebrow">Proyecto prioritario</div>'+
+      '<h1>Callejero + Denbou</h1><p>Captación y operaciones privadas.</p></div>'+
+      '<span class="rv2-percent"><strong data-merged-total>'+p+'%</strong><small>Estimado</small></span></div>'+
+      '<div class="project-current"><span><small>Etapa por avanzar</small><b>'+escapeText((integratedStages.find(s=>integratedStageProgress(s)<100)||{name:'Etapas al 100% estimado'}).name)+'</b></span><span><small>Siguiente acción</small><b>'+escapeText((priorityQueue.find(x=>!state.checks[x[0]]&&x[0].includes('backstage'))||['','Revisar entregables y validar producción'])[1])+'</b></span></div>'+
+      '<p class="rv3-roadmap-disclaimer">Estimaciones manuales del 7 nov 2026; no certifican funcionamiento.</p>'+
       '<details class="rv3-roadmap-advanced"><summary>Respaldos y ajustes avanzados</summary><div class="rv3-roadmap-actions"><button class="btn alt" type="button" data-merged-export>Exportar JSON</button>'+
       '<button class="btn ghost" type="button" data-merged-import>Importar JSON</button>'+
       '<button class="btn ghost" type="button" data-merged-reset>Restablecer estimaciones</button>'+
       '<input type="file" accept=".json,application/json" data-merged-file hidden></div></details>'+
-      '<p class="rv3-roadmap-feedback" data-merged-feedback role="status">Los cambios se guardan solo en este navegador; no modifican Denbou ni Supabase.</p>'+
+      '<p class="rv3-roadmap-feedback" data-merged-feedback role="status">Cambios guardados solo en este navegador.</p>'+
       '<details class="rv3-roadmap-list" open><summary>Áreas de trabajo (5)</summary>'+
       '<div class="rv3-roadmap-stage-grid">'+stages+'</div></details>'+
       '<details class="rv3-roadmap-old"><summary>Checklists técnicos anteriores (se conservan)</summary><p>Sus casillas y porcentajes siguen disponibles por separado.</p>'+
@@ -529,18 +540,19 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
     if(card){
       const value=integratedOverall();
       card.querySelector("[data-merged-total]").textContent=value+"%";
-      const overallTrack=card.querySelector("[data-merged-mainbar] .rv2-bar");
-      if(overallTrack){overallTrack.setAttribute("aria-valuenow",String(value));overallTrack.querySelector("span").style.width=value+"%";}
       integratedStages.forEach(stage=>{
         const item=card.querySelector('[data-merged-stage-pct="'+stage.id+'"]');
         if(!item)return;
         const value=integratedStageProgress(stage);
         item.textContent=value+"%";
-        const bar=item.closest(".rv3-roadmap-stage").querySelector(".rv3-roadmap-stage-progress .rv2-bar");
-        bar.setAttribute("aria-valuenow",String(value));
-        bar.querySelector("span").style.width=value+"%";
+
       });
     }
+    projectHost.querySelectorAll('[data-stage-members]').forEach(el=>{
+      const members=el.dataset.stageMembers.split(',').map(id=>integratedStages.find(s=>s.id===id)).filter(Boolean);
+      const weight=members.reduce((sum,s)=>sum+s.w,0);
+      el.textContent=Math.round(members.reduce((sum,s)=>sum+s.w*integratedStageProgress(s),0)/weight)+'%';
+    });
     const portfolio=renderPortfolio();
     renderIndicators(portfolio);
   }
@@ -604,133 +616,54 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
   });
 
 
-  function universeObject(kind,percent){
-    return '<span class="universe-object object-'+kind+'" style="--progress:'+percent+'" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
+  let currentProjectId='';
+  function showProject(id,moveFocus=true){
+    currentProjectId=id||'';
+    const directory=document.getElementById('projectDirectory');
+    if(directory)directory.classList.toggle('hidden',!!currentProjectId);
+    const heading=document.querySelector('.roadmap-project-heading');
+    if(heading)heading.classList.toggle('hidden',!!currentProjectId);
+    if(portfolioHost)portfolioHost.classList.toggle('hidden',!!currentProjectId);
+    const back=document.getElementById('projectBack');
+    if(back)back.classList.toggle('hidden',!currentProjectId);
+    projectHost.querySelectorAll('[data-project-id]').forEach(el=>el.classList.toggle('hidden',el.dataset.projectId!==currentProjectId));
+    if(moveFocus){
+      const target=currentProjectId?document.getElementById('project-'+currentProjectId):document.querySelector('[data-open-project]');
+      if(target)target.focus({preventScroll:true});
+      window.scrollTo({top:0,behavior:'auto'});
+    }
   }
-  function renderUniverse(overall){
-    const host=document.getElementById('universeProgress'),gallery=document.getElementById('universeProjects');
-    if(!host||!gallery)return;
-    host.innerHTML='<div class="object-caption"><span class="eyebrow">01 / PANORAMA</span><span class="orbit-label">EN MOVIMIENTO</span></div>'+universeObject('orbit',overall)+
-      '<div class="universe-progress-value"><strong>'+overall+'<span>%</span></strong><div><h2>Todo suma.</h2><p>Avance estimado del portafolio</p></div></div>'+
-      '<details class="universe-method"><summary>Cómo se calcula</summary><p>Callejero + Denbou aporta 70% y Torre Fuerte 30%. Conserva las estimaciones manuales y el avance ponderado de sus etapas; no certifica funcionamiento.</p></details>';
-    const visible=projects.filter(p=>p.id!=='callejero');
-    gallery.innerHTML=visible.map((p,index)=>{
-      const value=p.id==='backstage'?integratedOverall():projectInfo(p).progress;
-      const kind=['coil','tower','pebble','prism','satellite','bloom'][index%6];
-      return '<button type="button" class="universe-project project-'+kind+'" data-open-project="'+p.id+'">'+
-        '<span class="project-object-top"><span>'+String(index+1).padStart(2,'0')+'</span><span>'+(index<2?'PRIORITARIO':'EN ESPERA')+'</span><svg class="roadmap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></span>'+
-        universeObject(kind,value)+'<span class="project-object-bottom"><strong>'+escapeText(p.id==='backstage'?'Callejero + Denbou':p.name)+'</strong><span>'+value+'% <small>estimado</small></span></span></button>';
-    }).join('');
+  function renderDirectory(){
+    const directory=document.getElementById('projectDirectory');if(!directory)return;
+    const term=(filter.value||'').trim().toLocaleLowerCase('es-MX');
+    const items=Array.from(projectHost.querySelectorAll('[data-project-id]'));
+    directory.innerHTML=items.length?items.map(el=>{
+      const id=el.dataset.projectId,p=projects.find(p=>p.id===id);
+      const value=id==='backstage'?integratedOverall():projectInfo(p).progress;
+      const name=id==='backstage'?'Callejero + Denbou':p.name;
+      return '<button type="button" class="project-row" data-open-project="'+id+'"><span><strong>'+escapeText(name)+'</strong><small>'+(['backstage','torre'].includes(id)?'Prioritario':'En espera')+'</small></span><span class="project-row-progress">'+value+'%<small>estimado</small></span><svg class="roadmap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>';
+    }).join(''):'<p role="status">No hay tareas o proyectos que coincidan con «'+escapeText(term)+'».</p>';
   }
   document.addEventListener('click',event=>{
-    const button=event.target.closest('[data-open-project]');if(!button)return;
-    filter.value='';renderProjectsV2();
-    const tab=document.querySelector('#tabs button[data-tab="proyectos"]');if(tab)tab.click();
-    const target=document.getElementById('project-'+button.dataset.openProject);
-    if(target){const archive=target.closest('.archived-projects');if(archive)archive.open=true;target.focus({preventScroll:true});target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}
+    const button=event.target.closest('[data-open-project]');
+    if(button){const tab=document.querySelector('#tabs button[data-tab="proyectos"]');if(tab)tab.click();showProject(button.dataset.openProject);}
+    if(event.target.closest('[data-project-back]'))showProject('');
   });
-
+  const back=document.getElementById('projectBack');
+  if(back)back.addEventListener('click',()=>showProject(''));
   function renderPortfolio(){
-    const torre=projects.find(x=>x.id==="torre");
-    const other=torre?projectInfo(torre).progress:0;
-    const combined=integratedOverall();
+    const torre=projects.find(x=>x.id==='torre');
+    const other=torre?projectInfo(torre).progress:0,combined=integratedOverall();
     const overall=Math.round(combined*.70+other*.30);
-    const parts=[["Callejero + Denbou",70,combined],["Torre Fuerte",30,other]].map(([name,w,p])=>
-      '<div class="rv2-portfolio-row"><div><b>'+escapeText(name)+'</b><small>'+w+'% del peso</small></div><strong>'+p+'%</strong></div>'+
-      progressBar(p,name+": progreso orientativo",true)).join("");
-    portfolioHost.innerHTML='<div class="rv2-portfolio-head"><div><div class="eyebrow">PANORAMA GENERAL</div>'+
-      '<h2>Portafolio activo</h2><p>Callejero + Denbou es un solo proyecto integrado; Torre Fuerte sigue independiente. Los avances son estimaciones, no certificaciones.</p></div>'+
-      '<div class="rv2-global"><strong>'+overall+'%</strong><small>orientativo</small></div></div>'+
-      progressBar(overall,"Avance orientativo del portafolio",false)+
-      '<div class="rv2-portfolio-split">'+parts+'</div>'+
-      '<p class="rv2-footnote">Pesos: Callejero + Denbou 70%, Torre Fuerte 30%. Los ajustes locales no cambian las aplicaciones en producción.</p>';
-    renderUniverse(overall);
-    return overall;
+    portfolioHost.innerHTML='<div class="portfolio-summary"><span>Portafolio activo</span><strong data-portfolio-total>'+overall+'% estimado</strong></div><details><summary>Cómo se calcula</summary><p>Callejero + Denbou: '+combined+'% (peso 70%). Torre Fuerte: '+other+'% (peso 30%). Son estimaciones ponderadas, no pruebas de funcionamiento.</p></details>';
+    renderDirectory();return overall;
   }
-
-  // ROADMAP_V3_DENBOU · Tres anillos de vida sobre el plan diario.
-  // El primero muestra el alcance estimado del portafolio, los otros solo acciones
-  // elegidas y confirmadas. Nunca calificar el valor personal ni inferir emociones.
-  let selectedIndicator = "";
-  let latestOverall = 0;
-  const ringSpecs = [
-    {id:"progreso",label:"Progreso",color:"#FF7590",r:102,period:"Portafolio"},
-    {id:"salud",label:"Salud",color:"#B3FE15",r:75,period:"Hoy"},
-    {id:"vinculos",label:"Vínculos",color:"#42D7ED",r:48,period:"Esta semana"}
-  ];
-  const visualPercent = value => Math.max(0,Math.min(100,Math.round(Number(value)||0)));
-  function kpiCheckbox(id,label,description) {
-    return '<label class="rv3-check"><input type="checkbox" data-task="'+id+'" '+(state.checks[id]?'checked':'')+
-      '><span><b>'+escapeText(label)+'</b><small>'+escapeText(description)+'</small></span></label>';
+  function renderIndicators(){
+    const today=todayLocalKey(),week=weekMondayKey();
+    const health=[['daily-'+today+'-breakfast','Alimentación','Desayunar'],['daily-'+today+'-move','Movimiento','Caminar, correr o hacer ejercicio'],['daily-'+today+'-rest','Descanso','Dar espacio a la recuperación']];
+    const connections=[['contact-week-'+week+'-papa','Hablar con papá','Esta semana'],['contact-week-'+week+'-mama','Hablar con mamá','Esta semana'],['contact-week-'+week+'-amigos','Conectar con una amistad','Esta semana']];
+    indicatorsHost.innerHTML='<section class="life-section"><h2>Salud</h2>'+health.map(x=>taskHTML(...x)).join('')+'</section><section class="life-section"><h2>Vínculos</h2>'+connections.map(x=>taskHTML(...x)).join('')+'</section>';
   }
-  function renderIndicators(globalProgress) {
-    latestOverall=globalProgress;
-    const today=typeof todayLocalKey==="function"?todayLocalKey():new Date().toISOString().slice(0,10);
-    const week=typeof weekMondayKey==="function"?weekMondayKey():today;
-    const health=[
-      ["daily-"+today+"-breakfast","Desayuné","Un primer paso de alimentación para este día"],
-      ["daily-"+today+"-move","Moví mi cuerpo","Caminar, correr o hacer ejercicio a tu ritmo"],
-      ["daily-"+today+"-rest","Me di tiempo para descansar","El descanso también es una acción valiosa"]
-    ];
-    const connections=[
-      ["contact-week-"+week+"-papa","Hablé con papá","Una conversación significativa, no una cuota de mensajes"],
-      ["contact-week-"+week+"-mama","Hablé con mamá","También cuenta compartir un momento"],
-      ["contact-week-"+week+"-amigos","Conecté con una amistad","Conversación o convivencia que te importó"]
-    ];
-    const healthDone=health.filter(x=>!!state.checks[x[0]]).length;
-    const contactDone=connections.filter(x=>!!state.checks[x[0]]).length;
-    const values=[visualPercent(globalProgress),percent(healthDone,health.length),percent(contactDone,connections.length)];
-    const rings=ringSpecs.map((item,i)=>{
-      const perimeter=2*Math.PI*item.r,grade="rm-denbou-ring-"+item.id;
-      return '<defs><linearGradient id="'+grade+'" x1="0" y1="1" x2="1" y2="0">'+
-        '<stop offset="0" stop-color="'+item.color+'"/>'+
-        '<stop offset="1" stop-color="'+item.color+'" stop-opacity=".82"/></linearGradient></defs>'+
-        '<circle cx="120" cy="120" r="'+item.r+'" class="rv3-ring-track" stroke="'+item.color+'" />'+
-        (values[i]>0?'<circle cx="120" cy="120" r="'+item.r+'" class="rv3-ring-progress" stroke="url(#'+grade+
-        ')" stroke-dasharray="'+perimeter.toFixed(2)+'" stroke-dashoffset="'+(perimeter*(1-values[i]/100)).toFixed(2)+
-        '" style="--ring-length:'+perimeter.toFixed(2)+'"/>':'');
-    }).join("");
-    const metrics=ringSpecs.map((item,i)=>'<button type="button" class="rv3-metric'+(selectedIndicator===item.id?' is-selected':'')+
-      '" data-ring="'+item.id+'" aria-expanded="'+(selectedIndicator===item.id)+'" aria-controls="rv3-indicator-detail">'+
-      '<span class="rv3-metric-dot" style="--ring-color:'+item.color+'"></span>'+
-      '<span class="rv3-metric-copy"><strong>'+item.label+'</strong><small>'+item.period+'</small></span>'+
-      '<span class="rv3-metric-value">'+values[i]+'%</span>'+
-      '<span class="rv3-metric-caret" aria-hidden="true"><svg class="roadmap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>').join("");
-    let details="";
-    if(selectedIndicator==="progreso"){
-      details='<h4>Progreso de los proyectos</h4><p>Este porcentaje resume los frentes activos y sus avances documentados; no representa el éxito de tu vida, tus ingresos ni el cumplimiento de hoy.</p><button class="rv3-open-projects" type="button" data-side-nav="proyectos">Ver proyectos y etapas <svg class="roadmap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>';
-    }else if(selectedIndicator==="salud"){
-      details='<h4>Cuidado personal · hoy</h4><p>Solo tres acciones sencillas. No diagnosticamos ni medimos cómo deberías sentirte.</p>'+health.map(x=>kpiCheckbox(...x)).join("");
-    }else if(selectedIndicator==="vinculos"){
-      details='<h4>Personas importantes · esta semana</h4><p>Marca únicamente los momentos reales que te hayan importado. Una relación no se reduce a un porcentaje.</p>'+connections.map(x=>kpiCheckbox(...x)).join("");
-    }
-    indicatorsHost.innerHTML=
-      '<article class="rv3-life-shell" aria-labelledby="rv3-life-title">'+
-        '<div class="rv3-life-heading"><div><span class="rv3-kicker">TU PANORAMA</span>'+
-          '<h2 id="rv3-life-title">Lo importante, en equilibrio.</h2>'+
-          '<p>Proyectos, cuidado y personas. Un vistazo, sin tener que revisar diez pantallas.</p></div>'+
-          '<span class="rv3-soft-label">A tu ritmo</span></div>'+
-        '<div class="rv3-life-main"><div class="rv3-rings-figure" role="img" aria-label="Progreso '+values[0]+' por ciento, salud '+values[1]+' por ciento, vínculos '+values[2]+' por ciento">'+
-          '<svg viewBox="0 0 240 240" aria-hidden="true" focusable="false">'+rings+
-            '<text x="120" y="114" text-anchor="middle" class="rv3-svg-label">HOY</text>'+
-            '<text x="120" y="133" text-anchor="middle" class="rv3-svg-sub">Tres prioridades</text>'+
-          '</svg></div>'+
-          '<div class="rv3-metrics">'+metrics+'</div></div>'+
-        '<div id="rv3-indicator-detail" class="rv3-indicator-detail" '+(details?'':'hidden')+'>'+details+'</div>'+
-        '<p class="rv3-ring-note">Los anillos muestran avances estimados o acciones que tú confirmas. No son una evaluación de tu bienestar ni una comparación con otras personas.</p>'+
-      '</article>';
-  }
-
-  indicatorsHost.addEventListener("click",event=>{
-    const trigger=event.target.closest("[data-ring]");
-    if(!trigger)return;
-    selectedIndicator=selectedIndicator===trigger.dataset.ring?"":trigger.dataset.ring;
-    renderIndicators(latestOverall);
-    if(selectedIndicator){
-      const active=indicatorsHost.querySelector('[data-ring="'+selectedIndicator+'"]');
-      if(active)active.focus({preventScroll:true});
-    }
-  });
 
   let previousProjectTerm=null;
   function renderProjectsV2() {
@@ -754,17 +687,15 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
         const stat=stageInfo(project,step);
         const filtered=stat.items.filter(item=>!term||(project.name+" "+step.name+" "+item.title+" "+item.context).toLocaleLowerCase("es-MX").includes(term));
         const shown=filtered.length?filtered:stat.items;
-        return '<details class="rv2-stage" '+(term?'open':'')+'><summary><span><b>'+escapeText(step.name)+'</b><small>Peso de etapa: '+step.weight+'% · '+stat.completed+'/'+stat.items.length+' marcados'+(step.reference==null?'':' · base estimada '+step.reference+'%')+'</small></span><strong>'+stat.progress+'%</strong></summary>'+progressBar(stat.progress,project.name+": "+step.name,true)+'<div class="rv2-stage-tasks">'+shown.map(item=>taskHTML(item.id,item.title,item.context)).join("")+'</div></details>';
+        return '<details class="rv2-stage" '+(term?'open':'')+'><summary><span><b>'+escapeText(step.name)+'</b><small>Peso de etapa: '+step.weight+'% · '+stat.completed+'/'+stat.items.length+' marcados'+(step.reference==null?'':' · base estimada '+step.reference+'%')+'</small></span><strong>'+stat.progress+'%</strong></summary>'+'<div class="rv2-stage-tasks">'+shown.map(item=>taskHTML(item.id,item.title,item.context)).join("")+'</div></details>';
       }).join("");
       const snapshot=cfg.reference==null?'':'<div class="rv2-reference"><b>'+cfg.reference+'% estimado</b> · fotografía del alcance al '+escapeText(cfg.refDate)+'. Se actualizará al completar nuevas tareas; falta validar producción.</div>';
-      return '<article id="project-'+project.id+'" data-project-id="'+project.id+'" tabindex="-1" class="card project rv2-project"><div class="rv2-project-head"><div><div class="eyebrow">'+escapeText(cfg.priority)+' · '+escapeText(cfg.mode)+'</div><h3>'+escapeText(project.name)+'</h3><p>'+escapeText(project.description)+'</p></div><span class="rv2-percent">'+info.progress+'%</span></div>'+progressBar(info.progress,project.name+": avance orientativo",false)+'<div class="rv2-counter">'+info.completed+' de '+info.total+' entregables marcados</div>'+snapshot+'<div class="rv2-next"><strong>Próximo hito</strong><p>'+escapeText(cfg.next)+'</p><strong>Por resolver</strong><p>'+escapeText(cfg.blocker)+'</p></div><details class="rv2-stages" '+(term?'open':'')+'><summary>Ver etapas y entregables ('+cfg.phases.length+')</summary><div class="rv2-stage-grid">'+stages+'</div></details></article>';
+      return '<article id="project-'+project.id+'" data-project-id="'+project.id+'" tabindex="-1" class="project rv2-project"><div class="rv2-project-head"><div><div class="eyebrow">'+escapeText(cfg.priority)+' · '+escapeText(cfg.mode)+'</div><h1>'+escapeText(project.name)+'</h1><p>'+escapeText(project.description)+'</p></div><span class="rv2-percent"><strong data-project-total>'+info.progress+'%</strong><small>Estimado</small></span></div>'+'<div class="rv2-counter">'+info.completed+' de '+info.total+' entregables marcados</div>'+snapshot+'<div class="project-current"><span><small>Siguiente tarea</small><b>'+escapeText((cfg.phases.flatMap(step=>getItems(project,step)).find(item=>!state.checks[item.id])||{title:'Revisar los entregables completados'}).title)+'</b></span></div><div class="rv2-next"><strong>Próximo hito</strong><p>'+escapeText(cfg.next)+'</p><strong>Por resolver</strong><p>'+escapeText(cfg.blocker)+'</p></div><details class="rv2-stages" '+(term?'open':'')+'><summary>Ver etapas y entregables ('+cfg.phases.length+')</summary><div class="rv2-stage-grid">'+stages+'</div></details></article>';
     });
-    const active=projectCards.filter((markup,i)=>markup&&["backstage","torre"].includes(projects[i].id));
-    const archived=projectCards.filter((markup,i)=>markup&&!["backstage","torre"].includes(projects[i].id));
-    projectHost.innerHTML=active.join("")+
-      (archived.length?'<details class="archived-projects" '+(term?'open':'')+'><summary>En espera · '+archived.length+' proyectos</summary><div class="archived-project-grid">'+archived.join("")+'</div></details>':'');
+    projectHost.innerHTML=projectCards.join('');
     if(previousProjectTerm===term)projectHost.querySelectorAll('details').forEach((el,i)=>{if(i<expanded.length)el.open=expanded[i];});
     previousProjectTerm=term;
+    renderDirectory();showProject(currentProjectId,false);
     if(focusedTask){const replacement=Array.from(projectHost.querySelectorAll('[data-task]')).find(el=>el.dataset.task===focusedTask);if(replacement)replacement.focus({preventScroll:true});}
   }
 
@@ -772,7 +703,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
   // Las nuevas usan IDs permanentes milestone-proyecto-etapa-entregable.
   // Reemplazar la función de presentación no borra checkboxes ni notas anteriores.
   renderProjects = renderProjectsV2;
-  filter.addEventListener("input",renderProjectsV2);
+  filter.addEventListener("input",()=>{currentProjectId="";renderProjectsV2();});
 
   // Próximos pasos alineados con la última auditoría y con prioridades actuales.
   if(typeof priorityQueue!=="undefined" && typeof renderDailyPlan==="function"){

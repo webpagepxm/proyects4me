@@ -14,7 +14,7 @@ assert.match(html,/roadmap-3\.js/);
 assert.doesNotMatch(html,/roadmap-2026\.(js|css)/);
 assert.doesNotMatch(html,/<style\b/);
 assert.equal((html.match(/<script\b/g)||[]).length,1);
-assert.match(css,/--accent:#B3FE15/);
+assert.match(css,/--accent:#C4F54C/);
 assert.match(css,/@media\(max-width:780px\)/);
 assert.match(css,/\.rv3-workstream/);
 assert.match(js,/const key='mi-tablero-personal-v1'/);
@@ -62,13 +62,13 @@ const runtime=new Function('document','localStorage','window','navigator','Blob'
 runtime(document,localStorage,view,{clipboard:{writeText:async()=>{}}},function Blob(){},fileURL,()=>true,()=>({matches:true}),eventCtor);
 const rendered=nodes.projects.innerHTML;
 const rings=nodes.lifeIndicatorsV2.innerHTML;
-assert.match(rendered,/<h3>Callejero \+ Denbou<\/h3>/);
-assert.match(rendered,/<h3>Torre Fuerte<\/h3>/);
-assert.doesNotMatch(rendered,/<h3>Callejero PXM<\/h3>/);
+assert.match(rendered,/<h1>Callejero \+ Denbou<\/h1>/);
+assert.match(rendered,/<h1>Torre Fuerte<\/h1>/);
+assert.doesNotMatch(rendered,/<h1>Callejero PXM<\/h3>/);
 assert.match(rendered,/Áreas de trabajo \(5\)/);
-assert.match(rendered,/En espera ·/);
+assert.equal((rendered.match(/data-project-id=/g)||[]).length,6,'All six project details are retained');
 assert.match(rendered,/data-merged-total>38%/);
-for(const name of ['Progreso','Salud','Vínculos'])assert.ok(rings.includes(name),name);
+for(const name of ['Salud','Vínculos','contact-week-'])assert.ok(rings.includes(name),name);
 assert.equal(nodes.filter.listeners.input.length,1,'Only one search listener');
 assert.equal(Object.keys(JSON.parse(values.get('mi-tablero-personal-v1')||'{}').checks||{}).filter(x=>x.startsWith('evidence-')).length,0,'No fabricated completions');
 const slider={

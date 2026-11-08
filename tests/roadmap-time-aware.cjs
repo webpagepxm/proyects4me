@@ -7,7 +7,7 @@ const js=fs.readFileSync(path.join(root,'roadmap-3.js'),'utf8');
 assert.match(html,/id="dayCoach"/);
 const homeMarkup=html.slice(html.indexOf('<section id="hoy"'),html.indexOf('<section id="semana"'));
 assert.ok(homeMarkup.includes('id="dayCoach"'), 'Daily guidance must be visible on Home');
-assert.ok(homeMarkup.indexOf('id="dayCoach"')<homeMarkup.indexOf('id="universeProgress"'), 'Daily guidance must precede decorative portfolio progress');
+assert.ok(homeMarkup.indexOf('id="dayCoach"')<homeMarkup.indexOf('id="priorityList"'), 'Daily guidance must precede the work mission');
 const moreMarkup=html.slice(html.indexOf('<section id="mas"'),html.indexOf('<section id="revision"'));
 assert.ok(!moreMarkup.includes('id="dayCoach"'), 'Daily guidance cannot be buried in More');
 assert.match(html,/id="lifeIndicatorsV2"/);
@@ -42,7 +42,7 @@ function simulate(hour,minute=0){
  return {nodes,storage,day:()=>JSON.parse(storage.getItem(key)||'{}').daily?.['2026-11-07']||{}};
 }
 const nine=simulate(9);
-assert.match(nine.nodes.dayCoach.innerHTML,/HOY · MAÑANA/);
+assert.match(nine.nodes.dayCoach.innerHTML,/data-coach-phase="morning"/);
 assert.match(nine.nodes.dayCoach.innerHTML,/¿Acabas de despertar\?/);
 assert.match(nine.nodes.dayCoach.innerHTML,/09:00/);
 assert.match(nine.nodes.dayCoach.innerHTML,/15:30/);
@@ -75,12 +75,12 @@ nine.nodes.dayCoach.listeners.click[0]({target:{closest:s=>s==='[data-coach-acti
 assert.equal(nine.day().coachShift,false);
 assert.match(nine.nodes.dayCoach.innerHTML,/data-coach-action="shift-no" aria-pressed="true"/);
 const fourteen=simulate(14);
-assert.match(fourteen.nodes.dayCoach.innerHTML,/HOY · ANTES DE SALIR/);
+assert.match(fourteen.nodes.dayCoach.innerHTML,/data-coach-phase="afternoon"/);
 assert.match(fourteen.nodes.dayCoach.innerHTML,/aria-label="Cuidados de hoy"/, 'Daily essentials remain visible after noon');
 assert.match(fourteen.nodes.dayCoach.innerHTML,/14:00/);
 assert.doesNotMatch(fourteen.nodes.dayCoach.innerHTML,/¿Acabas de despertar/);
 const night=simulate(23);
-assert.match(night.nodes.dayCoach.innerHTML,/HOY · NOCHE/);
+assert.match(night.nodes.dayCoach.innerHTML,/data-coach-phase="night"/);
 assert.doesNotMatch(night.nodes.dayCoach.innerHTML,/coach-essentials/, 'Quiet mode hides daily checklist');
 assert.match(night.nodes.dayCoach.innerHTML,/Dejar el teléfono y las redes/);
 assert.match(night.nodes.dayCoach.innerHTML,/23:30/);
