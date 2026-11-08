@@ -13,7 +13,7 @@ assert.match(html,/roadmap-3\.css/);
 assert.match(html,/roadmap-3\.js/);
 assert.doesNotMatch(html,/roadmap-2026\.(js|css)/);
 assert.doesNotMatch(html,/<style\b/);
-assert.equal((html.match(/<script\b/g)||[]).length,1);
+assert.equal((html.match(/<script\b/g)||[]).length,3);assert.match(html,/day-director\.js/);assert.match(html,/wellness-model\.js/);
 assert.match(css,/--accent:#C4F54C/);
 assert.match(css,/@media\(max-width:780px\)/);
 assert.match(css,/\.rv3-workstream/);
@@ -58,8 +58,8 @@ const localStorage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v
 const fileURL={createObjectURL:()=>'blob:test',revokeObjectURL(){}};
 const view={scrollTo(){}};
 const eventCtor=class{constructor(type,options){this.type=type;this.bubbles=!!options?.bubbles;}};
-const runtime=new Function('document','localStorage','window','navigator','Blob','URL','confirm','matchMedia','Event',js);
-runtime(document,localStorage,view,{clipboard:{writeText:async()=>{}}},function Blob(){},fileURL,()=>true,()=>({matches:true}),eventCtor);
+const runtime=new Function('document','localStorage','window','navigator','Blob','URL','confirm','matchMedia','Event','RoadmapDayDirector','RoadmapWellness',js);
+runtime(document,localStorage,view,{clipboard:{writeText:async()=>{}}},function Blob(){},fileURL,()=>true,()=>({matches:true}),eventCtor,require('../day-director.js'),require('../wellness-model.js'));
 const rendered=nodes.projects.innerHTML;
 const rings=nodes.lifeIndicatorsV2.innerHTML;
 assert.match(rendered,/<h1>Callejero \+ Denbou<\/h1>/);
@@ -99,6 +99,11 @@ async function checkBackupImport(){
   assert.equal(saved().note,'Nota recuperada');
   updateProgress();
   assert.equal(saved().integratedDenbouProgress['calendar:0'],80,'Imported state stays reactive');
+  const fixture=js.replace("const key=", "projects.push({id:'unplanned',name:'Proyecto sin etapas',description:'',tasks:[]});const key=");
+  const withUnknown=new Function('document','localStorage','window','navigator','Blob','URL','confirm','matchMedia','Event','RoadmapDayDirector','RoadmapWellness',fixture);
+  withUnknown(document,localStorage,view,{clipboard:{writeText:async()=>{}}},function Blob(){},fileURL,()=>true,()=>({matches:true}),eventCtor,require('../day-director.js'),require('../wellness-model.js'));
+  assert.match(nodes.projects.innerHTML,/id="project-unplanned"/,'An undocumented project remains available');
+  assert.match(nodes.projects.innerHTML,/Sin estimación/,'Missing stages are unknown, not zero');
   console.log('ROADMAP smoke: structure, render, state, reset, slider and backup restoration passed.');
 }
 checkBackupImport().catch(e=>{console.error(e);process.exitCode=1;});

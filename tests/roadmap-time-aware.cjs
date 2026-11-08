@@ -1,94 +1,51 @@
-// Time-based ROADMAP guidance, no external libraries.
-// Execute: node tests/roadmap-time-aware.cjs
 'use strict';
-const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
-const root=path.join(__dirname,'..'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-const js=fs.readFileSync(path.join(root,'roadmap-3.js'),'utf8');
-assert.match(html,/id="dayCoach"/);
-const homeMarkup=html.slice(html.indexOf('<section id="hoy"'),html.indexOf('<section id="semana"'));
-assert.ok(homeMarkup.includes('id="dayCoach"'), 'Daily guidance must be visible on Home');
-assert.ok(homeMarkup.indexOf('id="dayCoach"')<homeMarkup.indexOf('id="priorityList"'), 'Daily guidance must precede the work mission');
-const moreMarkup=html.slice(html.indexOf('<section id="mas"'),html.indexOf('<section id="revision"'));
-assert.ok(!moreMarkup.includes('id="dayCoach"'), 'Daily guidance cannot be buried in More');
-assert.match(html,/id="lifeIndicatorsV2"/);
-assert.match(js,/ROADMAP_TIME_AWARE_DAY_V1/);
-new vm.Script(js,{filename:'roadmap-3.js'});
-const key='mi-tablero-personal-v1';
-function simulate(hour,minute=0){
- const nodes={},values=new Map();
- class FakeNode{
-   constructor(id=''){this.id=id;this.innerHTML='';this.value='';this.textContent='';this.dataset={};this.files=[];
-    this.listeners={};this.style={setProperty(){}};this.classList={add(){},remove(){},toggle(){}};
-    this.parentNode={insertBefore(el){nodes[el.id]=el}};}
-   addEventListener(type,fn){(this.listeners[type]??=[]).push(fn)}
-   querySelector(sel){return this.id==='hoy'&&sel==='.daily-overview'?new FakeNode('overview'):null}
-   querySelectorAll(){return []}insertAdjacentElement(_where,el){nodes[el.id]=el}
-   setAttribute(){}closest(){return null}select(){}append(){}remove(){}
-   click(){for(const f of this.listeners.click??[])f({target:this})}
- }
- for(const m of html.matchAll(/\bid="([^"]+)"/g))nodes[m[1]]=new FakeNode(m[1]);
- const doc={body:new FakeNode('body'),listeners:{},getElementById:id=>nodes[id]??null,
-   createElement:tag=>new FakeNode(tag),querySelector:()=>null,querySelectorAll:()=>[],
-   addEventListener(type,fn){(this.listeners[type]??=[]).push(fn)},execCommand:()=>true};
- const storage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v)};
- class Clock extends Date{
-   constructor(...args){if(args.length)super(...args);else super(2026,10,7,hour,minute,0)}
-   static now(){return new Clock().getTime()}
- }
- const runtime=new Function('document','localStorage','window','navigator','Blob','URL','confirm','matchMedia','Event','Date',js);
- runtime(doc,storage,{scrollTo(){}},{clipboard:{writeText:async()=>{}}},function Blob(){},
-   {createObjectURL:()=>'blob:test',revokeObjectURL(){}},()=>true,()=>({matches:true}),
-   class {constructor(type,opt){this.type=type;this.bubbles=!!opt?.bubbles}},Clock);
- return {nodes,storage,day:()=>JSON.parse(storage.getItem(key)||'{}').daily?.['2026-11-07']||{}};
+const assert=require('node:assert/strict');
+const {recommend,time}=require('../day-director.js');
+const {summarize,weighted}=require('../wellness-model.js');
+const fs=require('node:fs');
+const html=fs.readFileSync(require('node:path').join(__dirname,'../index.html'),'utf8');
+const at=(hour,minute=0)=>new Date(2026,10,8,hour,minute);
+const priority={id:'test-priority',name:'Denbou',title:'Validar acceso',projectId:'backstage'};
+const model=(hour,minute=0,extra={})=>recommend({now:at(hour,minute),priority,...extra});
+assert.doesNotMatch(html,/data-side-nav="vida"|id="vida"/,'Old personal destination is removed');
+assert.match(html,/data-side-nav="wellness"/);
+const home=html.slice(html.indexOf('<section id="hoy"'),html.indexOf('<section id="semana"'));
+assert.match(home,/id="dayCoach"/);assert.match(home,/id="personalRecords"/);assert.doesNotMatch(home,/type="checkbox"/);
+assert.equal(model(7).current.kind,'hygiene');
+assert.equal(model(9).current.kind,'breakfast');
+assert.equal(model(10).current.kind,'movement');
+assert.equal(model(13).current.kind,'meal');
+assert.equal(model(16).current.kind,'project');
+assert.equal(model(23).current.kind,'rest');assert.equal(model(2).priority,null);
+assert.equal(model(9).context,'','No configured times means no fake deadline');
+assert.equal(model(16).availableMinutes,null);
+assert.equal(time('25:99'),null);
+const before={coachShift:true,coachWorkStart:'16:00',coachWorkEnd:'23:00',coachCommute:30};
+assert.equal(model(15,10,{day:before}).current.kind,'departure');
+assert.equal(model(15,10,{day:before}).availableMinutes,20);
+assert.equal(model(15,40,{day:before}).current.kind,'commute');
+assert.equal(model(17,0,{day:before}).current.kind,'work');assert.equal(model(17,0,{day:before}).priority,null);
+assert.equal(model(23,10,{day:before}).current.kind,'recovery');assert.equal(model(15,0,{day:{coachShift:true,coachDeparture:'15:45'},checks:{'daily-2026-11-08-move':true}}).current.kind,'pause');
+assert.equal(model(17,0,{day:{...before,coachShift:false}}).current.kind,'project','Explicit off day overrides work schedule');
+assert.equal(model(9,0,{day:{coachWakeAnswered:'woke',coachWakeTime:535}}).current.kind,'hygiene');
+assert.equal(model(9,0,{day:{coachMorningOpenedAt:535}}).current.kind,'breakfast','Opening is not waking');
+assert.equal(model(9,0,{checks:{'daily-2026-11-08-breakfast':true}}).current.kind,'movement');
+assert.equal(model(13,0,{checks:{'daily-2026-11-08-food':true,'daily-2026-11-08-move':true}}).current.kind,'project');
+assert.equal(model(2,0,{previousDay:{coachShift:true,coachWorkStart:'22:00',coachWorkEnd:'06:00'}}).current.kind,'work','Previous-day overnight shift is respected');
+assert.equal(model(2,0,{day:{coachShift:true,coachWorkStart:'22:00',coachWorkEnd:'06:00'}}).current.kind,'rest','Tonight’s shift is not yesterday’s');
+assert.equal(model(23,0,{day:{coachShift:true,coachDeparture:'15:30'}}).priority,null);
+for(let minute=0;minute<1440;minute+=15){
+ const data={now:at(0,minute),day:{},checks:{},priority,personal:[]};const original=JSON.stringify(data);
+ const result=recommend(data);assert.equal(JSON.stringify(data),original,'Recommendation cannot mutate inputs');
+ assert.ok(result.next.length<=2);assert.equal(new Set([result.current.kind,...result.next.map(x=>x.kind)]).size,result.next.length+1,'No duplicate recommendation');
 }
-const nine=simulate(9);
-assert.match(nine.nodes.dayCoach.innerHTML,/data-coach-phase="morning"/);
-assert.match(nine.nodes.dayCoach.innerHTML,/¿Acabas de despertar\?/);
-assert.match(nine.nodes.dayCoach.innerHTML,/09:00/);
-assert.match(nine.nodes.dayCoach.innerHTML,/15:30/);
-assert.match(nine.nodes.dayCoach.innerHTML,/Lávate los dientes/);
-assert.match(nine.nodes.dayCoach.innerHTML,/aria-label="Cuidados de hoy"/);
-assert.match(nine.nodes.dayCoach.innerHTML,/data-task="daily-2026-11-07-teeth"/);
-assert.match(nine.nodes.dayCoach.innerHTML,/data-task="daily-2026-11-07-breakfast"/);
-assert.match(nine.nodes.dayCoach.innerHTML,/data-task="daily-2026-11-07-move"/);
-assert.match(nine.nodes.dayCoach.innerHTML,/<details class="coach-schedule" open>/, 'Morning timeline should be visible without extra clicks');
-assert.match(nine.nodes.dayCoach.innerHTML,/Actividad física/);
-assert.ok(!nine.day().coachWakeAnswered,'Opening does not claim wake-up');
-assert.match(nine.nodes.dayCoach.innerHTML,/data-coach-action="done"/);
-assert.doesNotMatch(nine.nodes.dayCoach.innerHTML,/La propuesta parte|Recomendaciones locales por hora|Un paso importante antes de salir|coach-caption/);
-const markTeeth={dataset:{coachAction:'done',coachCheck:'teeth'}};
-nine.nodes.dayCoach.listeners.click[0]({target:{closest:s=>s==='[data-coach-action]'?markTeeth:null}});
-assert.equal(JSON.parse(nine.storage.getItem(key)).checks['daily-2026-11-07-teeth'],true);
-assert.match(nine.nodes.dayCoach.innerHTML,/Desayuna/);
-
-const wakeButton={dataset:{coachAction:'woke'}};
-nine.nodes.dayCoach.listeners.click[0]({target:{closest:s=>s==='[data-coach-action]'?wakeButton:null}});
-assert.equal(nine.day().coachWakeAnswered,'woke');
-assert.equal(nine.day().coachWakeTime,540);
-assert.doesNotMatch(nine.nodes.dayCoach.innerHTML,/¿Acabas de despertar\?/);
-const field={value:'14:45'};
-nine.nodes.dayCoach.listeners.change[0]({target:{closest:s=>s==='[data-coach-departure]'?field:null}});
-assert.equal(nine.day().coachDeparture,'14:45');
-assert.match(nine.nodes.dayCoach.innerHTML,/14:45/);
-const shiftNo={dataset:{coachAction:'shift-no'}};
-nine.nodes.dayCoach.listeners.click[0]({target:{closest:s=>s==='[data-coach-action]'?shiftNo:null}});
-assert.equal(nine.day().coachShift,false);
-assert.match(nine.nodes.dayCoach.innerHTML,/data-coach-action="shift-no" aria-pressed="true"/);
-const fourteen=simulate(14);
-assert.match(fourteen.nodes.dayCoach.innerHTML,/data-coach-phase="afternoon"/);
-assert.match(fourteen.nodes.dayCoach.innerHTML,/aria-label="Cuidados de hoy"/, 'Daily essentials remain visible after noon');
-assert.match(fourteen.nodes.dayCoach.innerHTML,/14:00/);
-assert.doesNotMatch(fourteen.nodes.dayCoach.innerHTML,/¿Acabas de despertar/);
-const night=simulate(23);
-assert.match(night.nodes.dayCoach.innerHTML,/data-coach-phase="night"/);
-assert.doesNotMatch(night.nodes.dayCoach.innerHTML,/coach-essentials/, 'Quiet mode hides daily checklist');
-assert.match(night.nodes.dayCoach.innerHTML,/Dejar el teléfono y las redes/);
-assert.match(night.nodes.dayCoach.innerHTML,/23:30/);
-assert.match(night.nodes.priorityList.innerHTML,/La programación puede esperar a mañana/);
-assert.doesNotMatch(night.nodes.priorityList.innerHTML,/milestone-backstage/);
-assert.match(night.nodes.dayCoach.innerHTML,/Dejar el teléfono y las redes/);
-assert.doesNotMatch(night.nodes.dayCoach.innerHTML,/¿Acabas de despertar/);
-const afterMidnight=simulate(2);
-assert.match(afterMidnight.nodes.dayCoach.innerHTML,/Descansa/);
-assert.doesNotMatch(afterMidnight.nodes.dayCoach.innerHTML,/¿Acabas de despertar/);
-console.log('ROADMAP copy-audit: compact Home, morning, done, wake, schedule, afternoon and night checks passed.');
+const checks={'daily-2026-11-08-breakfast':true,'daily-2026-11-08-move':false,'daily-2026-11-07-food':true,'daily-2026-11-06-rest':true,'exercise-0':true,'daily-2026-11-09-rest':true};
+const wellness=summarize({checks,now:at(9)});
+assert.equal(wellness.metrics[0].confirmed,1);assert.equal(wellness.metrics[0].ratio,.5);assert.equal(wellness.metrics[1].ratio,0);assert.equal(wellness.metrics[2].ratio,null);
+assert.equal(wellness.history.length,7);assert.equal(wellness.history[0].date,'2026-11-02');assert.equal(wellness.history[6].date,'2026-11-08');assert.equal(wellness.hasTrend,true);
+assert.ok(summarize({now:at(9)}).metrics.every(x=>x.ratio===null),'Empty records remain unknown');
+assert.equal(summarize({checks:{'exercise-0':true},now:at(9)}).hasTrend,false,'Undated legacy marks cannot produce a dated history');
+assert.equal(summarize({checks:{'daily-2026-11-09-move':true},now:at(9)}).hasTrend,false,'Future records are excluded');
+assert.equal(weighted([]),null);assert.equal(weighted([{weight:10,value:null}]),null);assert.equal(weighted([{weight:0,value:70}]),null);
+assert.equal(weighted([{weight:70,value:38},{weight:30,value:0}]),27);assert.equal(weighted([{weight:2,value:0},{weight:1,value:0}]),0);
+console.log('ROADMAP time-aware: passive recommendations, configured shifts, overnight boundaries, no fabricated completions, empty/dated Wellness and weighted unknown progress passed.');

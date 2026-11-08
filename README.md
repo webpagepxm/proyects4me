@@ -1,55 +1,51 @@
-# Roadmap
+# Roadmap V2
 
-Organizador personal estático para el día, la vida y los proyectos, con diseño tipográfico basado en Denbou. Sitio habitual: https://webpagepxm.github.io/proyects4me/
+Dirección cotidiana, bienestar y seguimiento de proyectos. Sitio habitual: https://webpagepxm.github.io/proyects4me/
 
-## Desarrollo
+**Hoy** recomienda qué hacer ahora, hasta dos siguientes pasos y una prioridad profesional cuando corresponde. No requiere crear tareas, confirmar recomendaciones ni mantener listas. Los horarios y registros voluntarios quedan como opciones secundarias. **Proyectos** conserva detalles, estimaciones, barras por nivel, hitos y evidencia. **Wellness** visualiza registros reales de alimentación, movimiento y descanso, con historia de 7/14 días cuando hay datos suficientes. **Más** conserva horarios, semana, notas y respaldos. Mi vida ya no es una pantalla independiente; sus datos permanecen en Hoy.
 
-No requiere instalación de dependencias de producción, backend, secretos ni compilación. Usar el checkout existente; no hace falta un worktree. CI utiliza Node 22.
+## Desarrollo y validación
+
+Aplicación estática, sin backend, nuevas dependencias de producción, secretos ni compilación. Usar el checkout existente; no hace falta un worktree. CI usa Node 22.
 
 ```bash
+node --check day-director.js
+node --check wellness-model.js
 node --check roadmap-3.js
 node tests/roadmap-smoke.cjs
 node tests/roadmap-time-aware.cjs
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-- `index.html`: estructura, navegación y vistas.
-- `roadmap-3.css`: único sistema visual, tipografía, responsive y estados interactivos.
-- `roadmap-3.js`: datos, horarios, tareas, progreso, proyectos y persistencia.
-- `fonts/`: Plus Jakarta Sans variable 200–800 y licencia SIL OFL 1.1.
-- `DESIGN.md`: referencia, decisiones y compatibilidad.
+- `index.html`: estructura y navegación.
+- `day-director.js`: selección contextual pura, sin efectos de almacenamiento.
+- `wellness-model.js`: registros fechados y agregación ponderada con estados desconocidos.
+- `roadmap-3.js`: integración, proyectos, persistencia y vistas.
+- `roadmap-3.css`: sistema visual único, responsive y accesibilidad.
+- `fonts/`: Plus Jakarta Sans variable y licencia OFL 1.1.
+- `DESIGN.md`: inventario de recuperación, decisiones, fórmulas y límites.
 
-## Vistas
-
-**Hoy** muestra primero qué hacer ahora, cuidados diarios, pregunta de despertar, agenda recomendada, salida y turno editables. La misión de proyecto queda después. Por la noche ofrece descanso, sin pendientes profesionales. Abrir la app no confirma que acabes de despertar.
-
-**Proyectos** contiene un listado con filtro y acceso directo a los detalles de cada proyecto. Callejero + Denbou conserva diez etapas agrupadas en cinco áreas, estimaciones manuales y checklists técnicos anteriores. Torre Fuerte y los proyectos en espera mantienen sus tareas. Los porcentajes estimados no certifican funcionamiento en producción. El portafolio conserva la ponderación 70% integrado y 30% Torre Fuerte.
-
-**Mi vida** conserva cuidados, vínculos y hábitos. **Más** da acceso a semana, notas y respaldos. Las fechas y horarios son recomendaciones locales; no hay IA, notificaciones ni sincronización externa.
-
-## Datos
-
-La clave sigue siendo `mi-tablero-personal-v1`. No hay migración ni reinicio de marcas, notas o estimaciones. Una escritura fallida restaura el último estado guardado y muestra un error. La actualización conserva scroll, foco y desplegables.
-
-Para respaldar: Más → Revisión y respaldo → Exportar respaldo JSON. La importación pide confirmar antes de sustituir los registros locales. Borrar descarga un respaldo antes de eliminar datos de este navegador. Los controles avanzados del proyecto integrado conservan exportación/importación independiente.
-
-El sitio y las tareas iniciales son públicos. No introducir contraseñas ni datos sensibles en archivos versionados. Las notas y marcas del navegador no se comparten salvo al exportarlas.
-
-## Prueba de navegador
-
-Chromium está instalado en `/usr/bin/chromium`. En este entorno las herramientas están fuera del checkout:
+Con el servidor activo, las herramientas de navegador se instalan fuera del checkout:
 
 ```bash
 npm install --prefix /workspace/roadmap-tools --cache /tmp/roadmap-npm-cache --no-save --package-lock=false playwright@1.56.1 @axe-core/playwright@4.11.0
 NODE_PATH=/workspace/roadmap-tools/node_modules node tests/roadmap-browser.cjs
 ```
 
-Mantener el servidor activo. Opcionalmente establecer `ROADMAP_TEST_URL` y `CHROMIUM_PATH`. La prueba usa perfiles aislados y datos sintéticos: rutina visible; mañana, tarde, turno, noche y madrugada; seis proyectos; filtros; casillas; sliders con teclado; notas y recarga; respaldo completo; fallos de almacenamiento; foco y scroll; 320, 360, 375, 390, 430, 768, 1024, 1280 y 1440 px; ampliación CSS al 200%; auditoría automatizada de accesibilidad.
+Admite `ROADMAP_TEST_URL` y `CHROMIUM_PATH`. Usa datos sintéticos en perfiles aislados. Comprueba apertura sin escritura; reloj, horarios y cambios de día; hábitos opcionales; seis proyectos y todas las barras; respaldo completo; errores de almacenamiento; sincronización entre pestañas; Wellness sin registros y con historia; 320, 360, 375, 390, 430, 768, 1024, 1280 y 1440 px; ampliación CSS al 200%; accesibilidad automatizada. No hay lint ni typecheck configurados. No sustituye pruebas en Safari o iPhone físicos.
 
-No hay lint ni typecheck configurados. La prueba en Chromium no sustituye Safari o iPhone físicos.
+## Datos y alcance real
 
-## Publicación y reversión
+Se conserva `mi-tablero-personal-v1`, IDs, datos originales, marcas, notas, estimaciones y configuraciones diarias. No hay migración destructiva. Abrir y dejar pasar el tiempo no completa actividades ni genera tareas. Los horarios solo se usan cuando están configurados; Más permite guardarlos voluntariamente para el mismo día de la semana. Una excepción diaria prevalece sobre el horario habitual.
 
-GitHub Pages sirve el sitio estático. Los cambios se integran en `main` después de las comprobaciones. Confirmar el deployment en GitHub y la versión `20261108-readable-v2` de los assets antes de declarar una publicación verificada.
+La información de bienestar refleja confirmaciones voluntarias, no mediciones clínicas ni detección de conducta. Los huecos históricos son desconocidos y las marcas sin fecha no se fechan retrospectivamente. No hay IA, calendarios conectados, notificaciones ni sincronización remota. Las pestañas del mismo navegador sí se actualizan al cambiar el estado local.
 
-Versión previa: `76ce550cddb55f899b3b530e91e4d9291d968f6b`, conservada en `backup/pre-denbou-20261108`. Reversión mediante `git revert` del commit correspondiente, sin forzar el historial ni tocar localStorage.
+Los porcentajes de proyectos conservan las reglas y bases manuales originales. El portafolio utiliza 70% integrado y 30% Torre Fuerte, sin contar Callejero dos veces ni proyectos en espera. Un progreso desconocido muestra `Sin estimación`. La evidencia histórica no certifica tareas completadas.
+
+## Respaldos y publicación
+
+Más → Revisión y respaldo → Exportar respaldo JSON. La importación pide confirmar antes de sustituir datos; se conservan los horarios habituales al recuperar archivos antiguos que no los contienen. Los controles avanzados del proyecto integrado mantienen su respaldo independiente. Un fallo de escritura deshace el cambio visible y muestra un error.
+
+El sitio y las tareas iniciales son públicos. Notas y marcas quedan en el navegador, salvo al exportarlas. No versionar contraseñas ni datos sensibles.
+
+La publicación sigue GitHub Pages desde `main`. Confirmar el deployment y los assets `20261108-director-v1` antes de afirmar que la versión está visible públicamente. Referencia anterior: `backup/pre-day-director-20261108`, `f7c3927b96a9c7edb234bd5ab43067a098f191ce`. Revertir un commit publicado con `git revert`, sin forzar el historial ni restablecer localStorage.

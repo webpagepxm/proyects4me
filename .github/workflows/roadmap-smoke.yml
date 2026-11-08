@@ -14,7 +14,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate ROADMAP build and state
+      - name: Validate ROADMAP syntax and state
         run: |
+          node --check day-director.js
+          node --check wellness-model.js
+          node --check roadmap-3.js
           node tests/roadmap-smoke.cjs
           node tests/roadmap-time-aware.cjs

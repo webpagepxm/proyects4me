@@ -56,10 +56,10 @@ small{display:block;color:var(--muted);font-weight:500}
 .section h2{font-size:var(--type-section)}
 .footer{font-size:var(--type-small);line-height:1.7;color:var(--faint);margin-top:48px;padding-top:20px;border-top:1px solid var(--border)}
 /* Shared controls. A primary action is reserved for the current recommendation. */
-.btn,.text-link,.coach-done{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;min-width:48px;padding:10px 16px;background:var(--surface-alt);border:1px solid var(--border);border-radius:10px;font-size:var(--type-body);font-weight:650;text-decoration:none;transition:background-color var(--fast) var(--ease),border-color var(--fast) var(--ease)}
+.btn,.text-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;min-width:48px;padding:10px 16px;background:var(--surface-alt);border:1px solid var(--border);border-radius:10px;font-size:var(--type-body);font-weight:650;text-decoration:none;transition:background-color var(--fast) var(--ease),border-color var(--fast) var(--ease)}
 .btn.ghost,.text-link{background:transparent;color:var(--muted);border-color:transparent;padding-inline:0}
 .btn.ghost{padding-inline:12px}
-.coach-done,.btn.primary{background:var(--accent);border-color:var(--accent);color:#161B0C}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#161B0C}
 .input,input[type=time]{width:100%;min-height:48px;padding:11px 14px;background:var(--bg);border:1px solid #62656F;border-radius:10px;font-size:var(--type-body);color:var(--ink);min-width:0}
 .input::placeholder{color:var(--faint)}
 textarea.input{min-height:160px;resize:vertical;line-height:1.7}
@@ -69,33 +69,31 @@ summary{cursor:pointer;min-height:48px;padding:12px 0;color:var(--ink);font-size
 summary::marker{color:var(--muted)}
 details[open]>summary{margin-bottom:12px}
 details>p{font-size:var(--type-small);margin-bottom:16px}
-/* Today: orientation, essential care and schedule, then one work mission. */
-.day-coach{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px 40px;align-items:start}
-.coach-head{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:16px;color:var(--muted);font-size:var(--type-small)}
-.coach-clock{font-variant-numeric:tabular-nums}
-.coach-next{grid-column:1;display:grid;justify-items:start;gap:12px;padding:24px;background:var(--surface);border-radius:var(--radius)}
-.coach-next>span{font-size:var(--type-small);color:var(--muted)}
-.coach-next>strong{font-size:clamp(28px,2.7vw,36px);line-height:1.35;letter-spacing:-.025em;font-weight:700;max-width:24ch}
-.coach-done{margin-top:4px}
-.coach-essentials,.coach-rest{grid-column:1;margin-top:0}
-.coach-essential{display:flex;align-items:center;gap:14px;min-height:56px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:var(--type-body)}
-.coach-essential:last-child{border-bottom:0}
-.coach-essential:has(input:checked)>span{color:var(--muted)}
-.coach-wake{grid-column:1;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 0;border-top:1px solid var(--border)}
-.coach-wake>div,.coach-shift-choices{display:flex;gap:8px;flex-wrap:wrap}
-.coach-wake button,.coach-shift-choices button{background:transparent;border:1px solid #62656F;border-radius:8px;min-width:48px;min-height:48px;padding:10px 16px;font-size:var(--type-body)}
+/* Today: one recommendation, two next steps, and a secondary professional priority. */
+.today-heading{display:flex;align-items:baseline;justify-content:space-between;gap:20px}
+.today-heading time{font-size:var(--type-small);color:var(--muted);font-variant-numeric:tabular-nums}
+.day-coach{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.85fr);gap:40px 48px;align-items:start;margin-top:40px}
+.director-now{min-width:0}.director-now h2{font-size:clamp(32px,3.2vw,44px);line-height:1.25;letter-spacing:-.035em;margin:14px 0 18px;font-weight:700;max-width:22ch}
+.director-now>p:last-of-type{font-size:var(--type-body);max-width:44ch;line-height:1.7}
+.director-next{border-left:1px solid var(--border);padding-left:32px;min-width:0}
+.director-next h2{font-size:var(--type-section);margin:0 0 20px}
+.director-next ol{padding:0;margin:0;list-style:none;display:grid;gap:24px}
+.director-next strong{font-size:var(--type-body);font-weight:600;line-height:1.6;display:block}
+.director-next li p{font-size:var(--type-small);margin-top:6px}
+.director-context{font-size:var(--type-small);border-top:1px solid var(--border);padding-top:20px;margin-top:24px}
+.home-work{padding-top:28px;margin-top:40px;border-top:1px solid var(--border);max-width:none}
+.home-work h2{font-size:var(--type-body);color:var(--muted);font-weight:550;margin-bottom:12px}
+.priority-name{font-size:24px;color:var(--ink);max-width:52ch;line-height:1.5;font-weight:600;letter-spacing:-.02em}
+.personal-records{margin-top:40px;padding-top:12px;border-top:1px solid var(--border)}
+.personal-records>p{font-size:var(--type-small);margin:10px 0 24px}.personal-records #lifeIndicatorsV2{margin-top:24px}.legacy-goal{margin:24px 0 32px}.legacy-goal>p{font-size:var(--type-small);margin-top:8px}
+.day-settings,.director-method{border-top:1px solid var(--border);padding-top:8px;margin-bottom:24px}
+#coachSettings>p{font-size:var(--type-small);margin:12px 0 24px}
+.personal-settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 32px;margin:24px 0}
+.personal-setting{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;min-width:0}
+.personal-setting input{width:100%;min-height:48px;font-size:var(--type-body);padding:10px 12px;background:var(--bg);border:1px solid #62656F;border-radius:10px;min-width:0}
+.personal-setting label{width:100%}.coach-shift-choices{display:flex;flex-wrap:wrap;gap:8px}
+.coach-shift-choices button{background:transparent;border:1px solid #62656F;border-radius:8px;min-width:48px;min-height:48px;padding:10px 16px;font-size:var(--type-body)}
 .coach-shift-choices button[aria-pressed=true]{color:var(--accent);border-color:var(--accent);background:var(--accent-wash)}
-.coach-schedule{grid-column:2;grid-row:2 / span 3;border-top:1px solid var(--border)}
-.coach-slot{display:grid;grid-template-columns:126px minmax(0,1fr);gap:16px;padding:15px 0;border-bottom:1px solid var(--border)}
-.coach-slot-time{color:var(--muted);font-size:var(--type-small);font-variant-numeric:tabular-nums;white-space:nowrap}
-.coach-slot-copy b{font-size:var(--type-body);font-weight:550;line-height:1.6}
-.coach-settings{grid-column:1/-1;display:flex;align-items:center;gap:24px 32px;flex-wrap:wrap;padding:22px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-.coach-settings h2{font-size:var(--type-body);width:100%;font-weight:650}
-.coach-setting-row{display:flex;align-items:center;gap:16px;justify-content:space-between;flex:1;min-width:260px}
-.coach-setting-row input[type=time]{width:175px;min-width:155px;font-variant-numeric:tabular-nums}
-.home-work{padding-top:32px;margin-top:4px;max-width:760px}
-.home-work .section-head{margin-bottom:10px}
-#workCount{font-size:var(--type-small)}
 .task,.rv3-check{display:flex;align-items:flex-start;gap:14px;min-height:56px;padding:16px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:var(--type-body);line-height:1.6}
 .task:last-child{border-bottom:0}
 .task>span{min-width:0}.task b{display:block;font-size:var(--type-body);font-weight:600;line-height:1.6;overflow-wrap:anywhere}
@@ -112,7 +110,7 @@ details>p{font-size:var(--type-small);margin-bottom:16px}
 .portfolio-summary>span{color:var(--muted)}.portfolio-summary>strong{font-size:var(--type-body);font-weight:600}
 #portfolioV2 details{margin-top:4px}#portfolioV2 summary{font-size:var(--type-small);color:var(--muted)}
 #projectDirectory{margin-top:20px}
-.project-row{display:flex;align-items:center;gap:24px;width:100%;padding:24px 0;min-height:104px;border:0;border-top:1px solid var(--border);background:transparent;text-align:left;color:var(--ink)}
+.project-row{display:grid;grid-template-columns:minmax(0,1fr) auto 22px;align-items:center;gap:24px;width:100%;padding:24px 0;min-height:104px;border:0;border-top:1px solid var(--border);background:transparent;text-align:left;color:var(--ink)}
 .project-row>span:first-child{flex:1;min-width:0}
 .project-row strong{display:block;font-size:var(--type-section);line-height:1.4;font-weight:650;letter-spacing:-.025em;overflow-wrap:anywhere}
 .project-row small{font-size:var(--type-small);margin-top:4px}
@@ -171,19 +169,33 @@ details>p{font-size:var(--type-small);margin-bottom:16px}
 .save-status.is-saved{padding:12px 18px;background:var(--surface-alt);color:var(--ink);border:1px solid var(--border);animation:save-feedback 3s both}
 .save-status.is-error{padding:14px 18px;background:#492330;color:#FFE6ED;border:1px solid #BA657A;pointer-events:auto}
 @keyframes save-feedback{0%,75%{opacity:1}100%{opacity:0}}
-@media(hover:hover){.side-nav button:hover,.roadmap-more-tile:hover,.project-row:hover{background:var(--surface)}.btn:hover,.coach-wake button:hover,.coach-shift-choices button:hover{border-color:var(--muted)}.text-link:hover{color:var(--ink)}.coach-done:hover{background:#D1FA73}.task:hover b{color:var(--ink)}}
-button:active:not(:disabled){background-color:var(--surface-alt)}.coach-done:active{background:#B1DB40}
+@media(hover:hover){.side-nav button:hover,.roadmap-more-tile:hover,.project-row:hover{background:var(--surface)}.btn:hover,.coach-shift-choices button:hover{border-color:var(--muted)}.text-link:hover{color:var(--ink)}.task:hover b{color:var(--ink)}}
+button:active:not(:disabled){background-color:var(--surface-alt)}
 @media(min-width:1101px){:root{--type-body:20px;--type-section:28px}}
-@media(max-width:1100px){body{grid-template-columns:180px minmax(0,1fr)}.shell{padding-inline:28px}.roadmap-side{padding-inline:16px}.day-coach{gap:24px}.coach-setting-row{min-width:230px}.coach-slot{grid-template-columns:116px minmax(0,1fr);gap:12px}}
-@media(max-width:900px){.day-coach{grid-template-columns:1fr}.coach-head,.coach-next,.coach-essentials,.coach-rest,.coach-wake,.coach-schedule,.coach-settings{grid-column:1;grid-row:auto}.coach-wake{order:0}.coach-next{max-width:none}.coach-schedule{margin-top:4px}.coach-settings{gap:20px}#lifeIndicatorsV2,.two{grid-template-columns:1fr;gap:32px}.project-current{grid-template-columns:1fr;gap:24px}}
+@media(max-width:1100px){body{grid-template-columns:180px minmax(0,1fr)}.shell{padding-inline:28px}.roadmap-side{padding-inline:16px}}
+@media(max-width:900px){.day-coach{grid-template-columns:1fr;gap:28px}.director-next{border-left:0;border-top:1px solid var(--border);padding:24px 0 0}.director-next ol{gap:20px}#lifeIndicatorsV2,.two{grid-template-columns:1fr;gap:32px}.project-current{grid-template-columns:1fr;gap:24px}}
 @media(max-width:780px){
  body{display:block}.roadmap-side{display:none}.shell{padding:0 20px calc(112px + env(safe-area-inset-bottom,0px))}.top{height:76px;margin-bottom:28px;justify-content:space-between}.brand{display:block}.sidebrand-name{font-size:var(--type-section)}.roadmap-date-pill{gap:8px;font-size:var(--type-small)}.roadmap-date-pill .roadmap-icon{width:18px;height:18px}
- .screen-heading,.roadmap-project-heading,.roadmap-more-head{margin-bottom:24px}.day-coach{gap:20px}.coach-next{padding:24px}.coach-next>strong{font-size:30px}.coach-schedule>summary{font-size:var(--type-body)}.coach-settings h2{font-size:var(--type-body)}.coach-setting-row{flex-basis:100%;min-width:0}.coach-slot{grid-template-columns:116px minmax(0,1fr);gap:14px}.home-work{padding-top:28px}.home-work .section-head{align-items:baseline}.section-head h2{font-size:var(--type-section)}
+ .screen-heading,.roadmap-project-heading,.roadmap-more-head{margin-bottom:24px}.day-coach{margin-top:28px}.director-now h2{font-size:32px}.home-work{margin-top:28px;padding-top:24px}.priority-name{font-size:22px}.personal-settings-grid{grid-template-columns:1fr;gap:8px}
  .roadmap-bottom{position:fixed;z-index:60;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--border)}
  .roadmap-bottom button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:60px;padding:4px 0;background:transparent;border:0;border-radius:8px;color:var(--muted);font-size:clamp(14px,4vw,16px);font-weight:600;line-height:1.4}.roadmap-bottom button.active{color:var(--ink);background:var(--surface)}.roadmap-bottom button.active .roadmap-icon{color:var(--accent)}.roadmap-bottom button .roadmap-icon{width:22px;height:22px}
  .search{width:100%}.roadmap-project-heading{gap:20px}.project-row{gap:12px;padding:22px 0}.project-row strong{font-size:var(--type-section)}.project-row .roadmap-icon{width:18px;height:18px}.rv2-project-head{gap:16px}.rv2-project-head h1{font-size:36px}.rv2-percent{font-size:22px;padding-top:30px}.rv3-workstream-detail{padding-left:12px}.rv3-roadmap-stage>summary{gap:8px}.rv3-roadmap-ord{display:none}.rv3-roadmap-actions{flex-direction:column;align-items:flex-start}.review-actions{gap:8px;align-items:flex-start;flex-direction:column}.save-status{bottom:96px}.footer{margin-top:36px}.weekdays{gap:2px}.day{padding:10px 2px}.two{gap:32px}
 }
-@media(max-width:360px){.shell{padding-inline:16px}.coach-next{padding:20px}.coach-setting-row{flex-wrap:wrap;gap:10px}.coach-setting-row input[type=time]{width:100%}.coach-wake{align-items:flex-start}.rv2-project-head{flex-wrap:wrap}.rv2-percent{padding-top:0}.project-row{gap:10px}.project-row strong{font-size:22px}}
+@media(max-width:360px){.shell{padding-inline:16px}.rv2-project-head{flex-wrap:wrap}.rv2-percent{padding-top:0}.project-row{gap:10px}.project-row strong{font-size:22px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.save-status.is-saved{display:none}}
 
 .rv2-percent>strong{font-size:inherit;font-weight:inherit}.rv2-percent>small{font-size:var(--type-small);text-align:right;margin-top:4px}
+
+/* Restored progress is meaningful only when a value is known. */
+.progress-track{height:6px;background:#34383E;border-radius:8px;overflow:hidden;margin:14px 0 20px;min-width:0;width:100%}
+.progress-track>span{display:block;height:100%;background:var(--accent);border-radius:inherit;transition:width var(--fast) var(--ease)}
+.unknown-progress{display:block;font-size:var(--type-small);color:var(--muted);margin:12px 0}
+.directory-track{grid-column:1/-1;grid-row:2}.directory-track .progress-track{margin:0 0 4px}.project-row>.roadmap-icon{grid-column:3;grid-row:1}.project-row>span:first-child{grid-column:1;grid-row:1}.project-row-progress{grid-column:2;grid-row:1}
+.wellness-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;margin:36px 0 48px}
+.wellness-metric{display:flex;flex-direction:column;align-items:flex-start;gap:18px;min-width:0}.wellness-metric svg{width:140px;height:140px;flex:none}.wellness-metric h2{font-size:24px;margin-bottom:8px}.wellness-metric p,.wellness-metric small{font-size:var(--type-small)}
+.wellness-track{stroke:#34383E;stroke-width:9;fill:none}.wellness-ring{fill:none;stroke-width:9;stroke-linecap:round;transform:rotate(-90deg);transform-origin:55px 55px}
+#wellnessHistory{border-top:1px solid var(--border);padding-top:16px}.period-control{display:flex;gap:12px;align-items:center;font-size:var(--type-small)}.period-control select{min-height:48px;border:1px solid #62656F;padding:8px 12px;background:var(--bg);border-radius:8px;font-size:var(--type-body)}
+.wellness-chart svg{display:block;width:100%;height:190px;overflow:visible}.chart-guide{fill:none;stroke:var(--border);stroke-width:1}.chart-dates{display:flex;justify-content:space-between;font-size:var(--type-small);color:var(--muted);margin-top:8px}.chart-legend{display:flex;flex-wrap:wrap;gap:12px 24px;margin:20px 0;font-size:var(--type-small)}.chart-legend span{display:flex;align-items:center;gap:8px}.chart-legend i{width:10px;height:10px;border-radius:50%;display:block}
+.wellness-empty{padding:16px 0 24px}.wellness-values ul{list-style:none;margin:0;padding:0}.wellness-values li{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:16px 0;border-top:1px solid var(--border);font-size:var(--type-small)}.wellness-values span{color:var(--muted)}.wellness-method{margin-top:24px}
+@media(max-width:780px){.wellness-metrics{grid-template-columns:1fr;gap:24px;margin-block:28px}.wellness-metric{flex-direction:row;align-items:center;gap:20px}.wellness-metric svg{width:84px;height:84px}.wellness-metric h2{font-size:24px}.wellness-values li{grid-template-columns:1fr}.personal-records{margin-top:28px}.project-row{gap:16px 12px}.wellness-chart svg{height:160px}}
+.project-evidence{border-top:1px solid var(--border);margin-top:24px;padding-top:8px}.project-evidence ul{list-style:none;margin:0;padding:0}.project-evidence li{padding:16px 0;border-bottom:1px solid var(--border)}.project-evidence strong{font-size:var(--type-body);font-weight:550;line-height:1.7}.project-evidence small{margin-top:6px}

@@ -26,204 +26,172 @@ function save(silent=false){
  const note=document.getElementById('dailyNote');if(note)note.value=state.note||'';
  if(status){status.textContent='No se pudo guardar. El cambio se deshizo. Exporta un respaldo o libera espacio.';status.className='save-status is-error';}return false;
  }
-}const all=[...projects,...life];function taskHTML(id,title,sub=''){return `<label class="task ${state.checks[id]?'done':''}"><input type="checkbox" data-task="${id}" ${state.checks[id]?'checked':''}><span><b>${title}</b>${sub?`<small>${sub}</small>`:''}</span></label>`}function progress(item){return item.tasks.length?Math.round(item.tasks.filter((_,i)=>state.checks[item.id+'-'+i]).length/item.tasks.length*100):0}// ROADMAP_TIME_AWARE_DAY_V1: reglas locales de horario, sin IA, GPS ni notificaciones.
-// Abrir la página NO demuestra que la persona acaba de despertar.
+}const all=[...projects,...life];function taskHTML(id,title,sub=''){return `<label class="task ${state.checks[id]?'done':''}"><input type="checkbox" data-task="${id}" ${state.checks[id]?'checked':''}><span><b>${title}</b>${sub?`<small>${sub}</small>`:''}</span></label>`}function progress(item){return item.tasks.length?Math.round(item.tasks.filter((_,i)=>state.checks[item.id+'-'+i]).length/item.tasks.length*100):0}// ROADMAP_DAY_DIRECTOR_V2 · Recommendations are read-only and never imply completion.
 const coachHost=document.getElementById('dayCoach');
-const coachMinutes=()=>{const n=new Date();return n.getHours()*60+n.getMinutes()};
-const coachClock=minutes=>{
- const p=((Math.floor(minutes)%1440)+1440)%1440;
- return String(Math.floor(p/60)).padStart(2,'0')+':'+String(p%60).padStart(2,'0');
-};
-function coachParseTime(text,fallback=930){
- if(typeof text!=='string'||!/^([01]\d|2[0-3]):[0-5]\d$/.test(text))return fallback;
- return Number(text.slice(0,2))*60+Number(text.slice(3));
+const settingsHost=document.getElementById('coachSettings');
+let renderedDayKey=todayLocalKey();
+const textHTML=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function configuredDay(date){
+ const key=RoadmapDayDirector.dateKey(date),usual=state.weeklySchedule?.[date.getDay()];
+ return {...(usual&&typeof usual==='object'?usual:{}),...(state.daily?.[key]||{})};
 }
-function coachTimeLabel(a,b){return coachClock(a)+'–'+coachClock(b);}
-function coachSteps(start,end,morning,mainTask,readDone){
- const duration=Math.max(0,end-start);
- if(duration<=0)return [];
- let t=start;
- const steps=[];
- const add=(mins,title,details)=>{
-   const use=Math.min(Math.max(0,Math.floor(mins)),Math.max(0,end-t));
-   if(use<5)return;
-   steps.push({start:t,end:t+use,title,details});
-   t+=use;
- };
- if(duration<105){
-   add(Math.min(18,Math.floor(duration*.27)),'Cubrir lo básico','Agua, higiene y algo de comer, si hace falta');
-   add(Math.max(0,duration-35),'Una acción concreta','Escoge solo un paso del proyecto prioritario');
-   add(end-t,'Prepararte para salir','No necesitas recuperar el día completo');
-   return steps;
- }
- const prep=Math.min(25,Math.floor(duration*.13));
- const available=duration-prep;
- if(morning){
-   const routine=Math.min(85,Math.max(45,Math.floor(available*.28)));
-   const proportions=[10,25,35,15];
-   let balance=routine;
-   const portions=proportions.map((n,i)=>{const value=i===3?balance:Math.max(5,Math.round(routine*n/85));balance-=value;return value});
-   add(portions[0],'Higiene y agua','Lavarte los dientes y tomar agua');
-   add(portions[1],'Desayunar','Comer antes de entrar a los proyectos');
-   add(portions[2],'Actividad física','30 minutos como base cuando haya tiempo');
-   add(portions[3],'Prepararte','Ducha o alistarte para el día');
- }
- const forWork=Math.max(0,end-t-prep);
- const breakFood=forWork>100?Math.min(30,Math.round(forWork*.10)):0;
- const read=morning&&forWork>330&&!readDone?15:0;
- const breakShort=forWork>200?10:0;
- let focus=forWork-breakFood-read-breakShort;
- if(focus<0)focus=0;
- const parts=focus>260?3:focus>135?2:1;
- const first=Math.floor(focus/parts);
- add(first,'Proyecto principal','Un paso verificable: '+mainTask);
- if(read)add(read,'Lectura breve (opcional)','15 minutos para leer si te resulta agradable');
- if(breakFood)add(breakFood,'Pausa para comer','No sacrificar la alimentación por programar');
- if(breakShort)add(breakShort,'Pausa breve','Agua, caminar o despejarte');
- for(let i=1;i<parts;i++)add(i===parts-1?Math.max(0,focus-first*(parts-1)):first,i===1?'Segundo bloque de trabajo':'Último bloque de trabajo','Retomar el siguiente paso, solo si hay energía');
- add(end-t,'Cerrar y prepararte','Guardar cambios, recoger tus cosas y salir sin prisas');
- return steps;
-}
-function coachFocus(now,phase,key,shiftChoice,work){
- const done=id=>!!state.checks['daily-'+key+'-'+id];
- if(phase==='night'){
-   if(now<360||now>=60&&now<360)return ['Dormir y desconectar','Si aún estás despierto, no hace falta abrir otra tarea de programación.'];
-   return ['Baja el ritmo','Deja las redes, prepara lo de mañana y busca una hora tranquila para dormir.'];
- }
- if(phase==='morning'){
-   const care=[['teeth','Lavarte los dientes y tomar agua'],['breakfast','Desayunar'],['move','Hacer 30 minutos de movimiento']];
-   const next=care.find(item=>!done(item[0]));
-   if(next)return [next[1],'Empieza por lo básico. Cuando termines, marca la acción y verás el siguiente paso.'];
-   return [work?.[1]||'Revisar tu primera misión','Tu rutina inicial está cubierta. Ahora, una tarea del proyecto prioritario.'];
- }
- if(phase==='afternoon'){
-   if(now>=13*60&&!done('food'))return ['Hacer una pausa para comer','Después vuelves a tu misión, sin saltarte la comida.'];
-   return [work?.[1]||'Revisar el siguiente paso del proyecto','Un bloque de concentración. Si se acerca tu salida, elige un paso pequeño.'];
- }
- if(shiftChoice===false){
-   return [now<19*60&&work?work[1]:'Descansar y recuperar energía','Si aún quieres avanzar, haz un bloque corto; también cuenta terminar a tiempo.'];
- }
- return ['Atender tu turno o tus compromisos','La hora de salida es una referencia editable. No asumiré que estás trabajando sin confirmarlo.'];
+function currentOrientation(){
+ const now=new Date(),date=todayLocalKey(),previous=new Date(now);
+ previous.setDate(previous.getDate()-1);
+ const entry=priorityQueue.find(([id])=>!state.checks[id]);
+ const projectId=entry?(entry[0].includes('torre')?'torre':entry[0].includes('callejero')?'backstage':'backstage'):null;
+ return RoadmapDayDirector.recommend({now,day:configuredDay(now),previousDay:configuredDay(previous),checks:state.checks,
+  priority:entry?{id:entry[0],projectId,name:projectId==='torre'?'Torre Fuerte':'Callejero + Denbou',title:entry[1],detail:entry[2]}:null,
+  personal:life,weekKey:weekMondayKey()});
 }
 function renderDayCoach(){
  if(!coachHost)return;
- const key=todayLocalKey(),day=todayCheckin(),now=coachMinutes();
- let departure=coachParseTime(day.coachDeparture,15*60+30);
- const shift=day.coachShift??null;
- const effectiveEnd=shift===false?Math.max(departure,18*60):departure;
- const morning=now>=360&&now<720;
- const phase=(now<360||now>=21*60)?'night':
-   now<720?'morning':now<effectiveEnd?'afternoon':'late';
- if(phase==='morning'&&!Number.isFinite(+day.coachMorningOpenedAt)){
-   day.coachMorningOpenedAt=now;save(true);
+ const model=currentOrientation(),signature=JSON.stringify(model);
+ const clock=document.getElementById('directorTime');
+ if(clock)clock.textContent=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',hour12:false});
+ const date=document.getElementById('todayDate');
+ if(date)date.textContent=new Date().toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'});
+ if(coachHost.dataset.orientation!==signature){
+  coachHost.dataset.orientation=signature;
+  coachHost.innerHTML='<div class="director-now" data-director-kind="'+model.current.kind+'" data-coach-phase="'+model.phase+'"><p class="eyebrow">Ahora</p><h2>'+textHTML(model.current.title)+'</h2><p>'+textHTML(model.current.detail)+'</p></div>'+
+   '<section class="director-next" aria-labelledby="nextTitle"><h2 id="nextTitle">Después</h2><ol>'+model.next.map(x=>'<li><strong>'+textHTML(x.title)+'</strong>'+(x.detail?'<p>'+textHTML(x.detail)+'</p>':'')+'</li>').join('')+'</ol>'+(model.context?'<p class="director-context">'+textHTML(model.context)+'</p>':'')+'</section>';
  }
- if(phase==='afternoon'&&!Number.isFinite(+day.coachAfternoonOpenedAt)){
-   day.coachAfternoonOpenedAt=now;save(true);
- }
- const availableWork=priorityQueue.filter(x=>!state.checks[x[0]]);
- const first=availableWork[0];
- const done=id=>!!state.checks['daily-'+key+'-'+id];
- const nextCare=phase==='morning'?
-   [['teeth','Lávate los dientes'],['breakfast','Desayuna'],['move','Haz ejercicio · 30 min']].find(x=>!done(x[0])):
-   phase==='afternoon'&&now>=13*60&&!done('food')?['food','Come algo']:null;
- const title=nextCare?nextCare[1]:phase==='night'?(now<360?'Descansa':'Deja el teléfono'):
-   phase==='late'?(shift===true?'Ve a trabajar':'Cierra tu día'):'Avanza en tu proyecto';
- const periodNames={morning:'Mañana',afternoon:'Antes de salir',late:'Tarde',night:'Noche'};
- const savedOpening=phase==='morning'?day.coachMorningOpenedAt:phase==='afternoon'?day.coachAfternoonOpenedAt:now;
- const opening=Number.isFinite(+savedOpening)?+savedOpening:now;
- const start=Math.max(360,Math.min(now,opening));
- const items=phase==='morning'||phase==='afternoon'?
-   coachSteps(start,effectiveEnd,phase==='morning',first?first[1]:'hacer un pequeño avance',!!state.checks['daily-'+key+'-read']):
-   phase==='late'?
-   [
-     {start:now,end:Math.min(now+30,21*60),title:shift===true?'Turno de trabajo':'Cerrar compromisos',details:shift===true?'Atiende tu turno, sin sumar tareas de programación':'Si no hay turno, puedes descansar o cerrar algo pequeño'},
-     {start:Math.min(now+30,21*60),end:21*60,title:'Comida y pausa',details:'Cuida tu energía antes de la noche'}
-   ].filter(x=>x.end>x.start):
-   now>=21*60?
-   [
-     {start:now,end:Math.max(now,23*60+30),title:'Cerrar el día con calma',details:'Preparar mañana sin abrir pendientes nuevos'},
-     {start:Math.max(now,23*60+30),end:Math.max(now+15,23*60+45),title:'Dejar el teléfono y las redes',details:'Referencia sugerida: 23:30; si ya pasó, empieza ahora'},
-     {start:Math.max(now+15,23*60+45),end:Math.max(now+40,24*60+30),title:'Lectura y descanso',details:'Un rato tranquilo; acostarte gradualmente entre 00:00 y 01:00'}
-   ].filter(x=>x.end>x.start):[];
- const rows=items.slice(0,10).map(item=>
-   '<div class="coach-slot"><span class="coach-slot-time">'+coachTimeLabel(item.start,item.end)+'</span>'+
-   '<span class="coach-slot-copy"><b>'+item.title+'</b></span></div>'
- ).join('');
- const wakePrompt=morning&&!day.coachWakeAnswered?
-   '<div class="coach-wake"><span>¿Acabas de despertar?</span>'+
-   '<div><button type="button" data-coach-action="woke">Sí</button>'+
-   '<button type="button" data-coach-action="awake">No</button></div></div>':'';
- const priorSchedule=coachHost.querySelector('.coach-schedule');
- const scheduleOpen=priorSchedule?priorSchedule.open:true;
- const outline=phase==='night'?'Rutina de noche':
-   phase==='late'?'Ver la tarde':'Horario hasta '+coachClock(effectiveEnd);
- const essentials=phase==='night'?'':
-   '<div class="coach-essentials" aria-label="Cuidados de hoy">'+
-   [['teeth','Lavarme los dientes y tomar agua'],['breakfast','Desayunar'],['move','Moverme / hacer ejercicio'],['food','Comer y hacer una pausa']].map(([id,label])=>
-     '<label class="coach-essential"><input type="checkbox" data-task="daily-'+key+'-'+id+'" '+(done(id)?' checked':'')+'><span>'+label+'</span></label>'
-   ).join('')+'</div>';
- const mark=nextCare?
-   '<button type="button" class="coach-done" data-coach-action="done" data-coach-check="'+nextCare[0]+'">Hecho</button>':'';
- coachHost.innerHTML=
-   '<div class="coach-head" data-coach-phase="'+phase+'"><span class="eyebrow">'+periodNames[phase]+'</span>'+
-   '<time class="coach-clock">'+coachClock(now)+'</time></div>'+
-   '<div class="coach-next" role="status"><span>Ahora</span><strong>'+title+'</strong>'+mark+'</div>'+
-   wakePrompt+
-   essentials+
-   (phase==='night'?'<div class="coach-rest">'+taskHTML('daily-'+key+'-read','Leer un rato')+taskHTML('daily-'+key+'-rest','Prepararme para descansar')+'</div>':'')+
-   '<details class="coach-schedule"'+(scheduleOpen?' open':'')+'><summary>'+outline+'</summary>'+
-   '<div class="coach-slots">'+(rows||'<p>Descansa.</p>')+'</div></details>'+
-   '<div class="coach-settings"><h2>Tu horario</h2>'+
-   '<div class="coach-setting-row"><label for="coachDeparture">Hora de salida</label>'+
-   '<input id="coachDeparture" data-coach-departure type="time" value="'+coachClock(departure)+'"></div>'+
-   '<div class="coach-setting-row"><span>¿Trabajas hoy?</span><div class="coach-shift-choices">'+
-   '<button type="button" data-coach-action="shift-yes" aria-pressed="'+(shift===true)+'">Sí</button>'+
-   '<button type="button" data-coach-action="shift-no" aria-pressed="'+(shift===false)+'">No</button></div></div></div>';
+ const priority=document.getElementById('priorityList'),work=document.getElementById('homePriority');
+ if(work)work.classList.toggle('hidden',!model.priority||model.current.kind==='project');
+ if(priority)priority.innerHTML=model.priority?'<p class="priority-name">'+textHTML(model.priority.title)+'</p><button type="button" class="text-link" data-open-project="'+model.priority.projectId+'">Ver proyecto</button>':'';
+ // When the project itself is the current suggestion it needs just one link, not a duplicate section.
+ let link=coachHost.querySelector('[data-director-project]');
+ if(model.current.kind==='project'&&model.priority){
+  if(!link){link=document.createElement('button');link.type='button';link.className='text-link';link.dataset.directorProject='';const container=coachHost.querySelector('.director-now');if(container)container.append(link);}
+  link.textContent='Ver proyecto';link.dataset.openProject=model.priority.projectId;
+ }else if(link)link.remove();
 }
-if(coachHost){
- coachHost.addEventListener('click',event=>{
-  const button=event.target.closest('[data-coach-action]');
-  if(!button)return;
+function renderPersonalSettings(){
+ if(!settingsHost||settingsHost.contains?.(document.activeElement))return;
+ const day=configuredDay(new Date());
+ const field=(id,key,label,type='time')=>'<div class="personal-setting"><label for="'+id+'">'+label+'</label><input id="'+id+'" type="'+type+'" data-coach-field="'+key+'" '+(type==='number'?'min="0" max="240" step="1"':'')+' value="'+textHTML(day[key]??'')+'"></div>';
+ settingsHost.innerHTML='<p>Solo se usan las horas que guardes. Puedes dejar los campos vacíos.</p><div class="personal-settings-grid">'+
+  field('coachDeparture','coachDeparture','Salida de casa')+field('coachWorkStart','coachWorkStart','Entrada al trabajo')+field('coachWorkEnd','coachWorkEnd','Fin del turno')+field('coachCommute','coachCommute','Traslado en minutos','number')+'</div>'+
+  '<div class="personal-setting"><span>¿Trabajas hoy?</span><div class="coach-shift-choices">'+[['shift-yes','Sí',day.coachShift===true],['shift-no','No',day.coachShift===false],['shift-unknown','Sin confirmar',day.coachShift==null]].map(([action,label,selected])=>'<button type="button" data-coach-action="'+action+'" aria-pressed="'+selected+'">'+label+'</button>').join('')+'</div></div>'+
+  '<div class="personal-setting"><span>¿Acabas de despertar?</span><div class="coach-shift-choices"><button type="button" data-coach-action="woke">Sí, ahora</button><button type="button" data-coach-action="awake">Ya estaba despierto</button></div></div>'+
+  '<div class="repeat-settings"><button type="button" class="text-link" data-coach-action="repeat-weekday">Repetir este horario cada '+new Date().toLocaleDateString('es-MX',{weekday:'long'})+'</button>'+(state.weeklySchedule?.[new Date().getDay()]?'<button type="button" class="text-link" data-coach-action="forget-weekday">Quitar horario habitual de este día</button>':'')+'</div>'+
+  (day.coachWakeAnswered==='woke'&&Number.isFinite(day.coachWakeTime)?'<p>Despertar confirmado: '+RoadmapDayDirector.clock(day.coachWakeTime)+'.</p>':'');
+}
+if(settingsHost){
+ settingsHost.addEventListener('change',event=>{
+  const input=event.target.closest('[data-coach-field]');if(!input)return;
+  const name=input.dataset.coachField;
+  if(!['coachDeparture','coachWorkStart','coachWorkEnd','coachCommute'].includes(name))return;
+  if(input.value&&name==='coachCommute'&&(!Number.isInteger(+input.value)||+input.value<0||+input.value>240))return;
+  if(input.value&&name!=='coachCommute'&&RoadmapDayDirector.time(input.value)===null)return;
+  const day=todayCheckin();
+  if(input.value==='')delete day[name];else day[name]=name==='coachCommute'?+input.value:input.value;
+  const accepted=save();if(!accepted)input.value=state.daily?.[todayLocalKey()]?.[name]??'';
+  preserveInteraction(renderDayCoach);
+ });
+ settingsHost.addEventListener('click',event=>{
+  const button=event.target.closest('[data-coach-action]');if(!button)return;
   const day=todayCheckin(),action=button.dataset.coachAction;
-  if(action==='woke'||action==='awake'){
-   day.coachWakeAnswered=action;
-   if(action==='woke'){day.coachWakeTime=coachMinutes();day.coachMorningOpenedAt=day.coachWakeTime;}
-  }else if(action==='shift-yes')day.coachShift=true;
+  if(action==='shift-yes')day.coachShift=true;
   else if(action==='shift-no')day.coachShift=false;
-  else if(action==='done'){
-   const id=button.dataset.coachCheck;
-   if(!['teeth','breakfast','move','food'].includes(id))return;
-   state.checks['daily-'+todayLocalKey()+'-'+id]=true;
-   save();preserveInteraction(render);return;
-  }else return;
-  save();preserveInteraction(()=>{renderDayCoach();if(action==='shift-yes'||action==='shift-no')renderDailyPlan();});
- });
- coachHost.addEventListener('change',event=>{
-  const time=event.target.closest('[data-coach-departure]');
-  if(!time)return;
-  if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(time.value))return;
-  const day=todayCheckin();day.coachDeparture=time.value;
-  save();preserveInteraction(renderDailyPlan);
- });
- document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden)renderDayCoach();
+  else if(action==='shift-unknown')day.coachShift=null;
+  else if(action==='woke'){day.coachWakeAnswered='woke';day.coachWakeTime=new Date().getHours()*60+new Date().getMinutes();}
+  else if(action==='awake')day.coachWakeAnswered='awake';
+  else if(action==='repeat-weekday'){
+   const source=configuredDay(new Date()),entry={};
+   ['coachShift','coachDeparture','coachWorkStart','coachWorkEnd','coachCommute'].forEach(k=>{if(source[k]!==undefined)entry[k]=source[k];});
+   if(!state.weeklySchedule||typeof state.weeklySchedule!=='object')state.weeklySchedule={};
+   state.weeklySchedule[new Date().getDay()]=entry;
+  }else if(action==='forget-weekday'){if(state.weeklySchedule)delete state.weeklySchedule[new Date().getDay()];}else return;
+  save();
+  // Explicit setting changes can redraw controls; background ticks never interrupt editing.
+  preserveInteraction(()=>{settingsHost.innerHTML='';renderPersonalSettings();renderDayCoach();});
  });
 }
+function refreshOrientation(){
+ if(document.hidden)return;
+ if(renderedDayKey!==todayLocalKey()){renderedDayKey=todayLocalKey();preserveInteraction(()=>{renderCalendar();render();});}
+ else preserveInteraction(()=>{renderDayCoach();renderPersonalSettings();renderWellness();});
+}
+document.addEventListener('visibilitychange',refreshOrientation);
+if(typeof window.addEventListener==='function'){
+ window.addEventListener('focus',refreshOrientation);
+ window.addEventListener('pageshow',refreshOrientation);
+ window.addEventListener('storage',event=>{
+  if(event.key!==key)return;
+  try{
+   const incoming=JSON.parse(event.newValue||'{"checks":{},"note":""}');
+   if(!incoming||typeof incoming!=='object'||Array.isArray(incoming)||!incoming.checks||typeof incoming.checks!=='object'||Array.isArray(incoming.checks))return;
+   const replace=(target,source)=>{
+    Object.keys(target).forEach(k=>{if(!Object.hasOwn(source,k)){if(target[k]&&typeof target[k]==='object'&&!Array.isArray(target[k]))replace(target[k],{});else delete target[k];}});
+    Object.entries(source).forEach(([k,v])=>{if(['__proto__','constructor','prototype'].includes(k))return;
+     if(v&&typeof v==='object'&&!Array.isArray(v)){if(!target[k]||typeof target[k]!=='object')target[k]={};replace(target[k],v);}else target[k]=v;
+    });
+   };
+   replace(state,incoming);lastSavedState=JSON.stringify(state);
+   const note=document.getElementById('dailyNote');if(note&&document.activeElement!==note)note.value=state.note||'';
+   preserveInteraction(render);
+  }catch(error){/* Ignore malformed external state and keep the current in-memory view. */}
+ });
+}
+if(typeof window.setInterval==='function')window.setInterval(refreshOrientation,60000);
 
+let wellnessDays=7;
+function renderWellness(){
+ const host=document.getElementById('wellnessSummary'),history=document.getElementById('wellnessHistory');if(!host||!history)return;
+ const model=RoadmapWellness.summarize({checks:state.checks,now:new Date(),days:wellnessDays}),signature=JSON.stringify(model);
+ if(host.dataset.model===signature)return;host.dataset.model=signature;
+ const label=m=>m.ratio===null?'Sin datos':m.confirmed+' de '+m.expected+' registros confirmados';
+ host.innerHTML='<p class="wellness-scope">Registros de hoy</p><div class="wellness-metrics">'+model.metrics.map(m=>{
+  const size=2*Math.PI*43,hasData=m.ratio!==null;
+  return '<section class="wellness-metric"><svg viewBox="0 0 110 110" role="img" aria-label="'+textHTML(m.name+': '+label(m))+'"><circle class="wellness-track" cx="55" cy="55" r="43"/>'+
+   (hasData?'<circle class="wellness-ring" cx="55" cy="55" r="43" stroke="'+m.color+'" stroke-dasharray="'+size+'" stroke-dashoffset="'+size*(1-m.ratio)+'"/>':'')+'</svg><div><h2>'+m.name+'</h2><p>'+label(m)+'</p>'+(hasData&&m.missing?'<small>'+m.missing+' sin registrar; no se asumen completados.</small>':'')+'</div></section>';
+ }).join('')+'</div>';
+ const legend=model.metrics.map(m=>'<span><i style="background:'+m.color+'"></i>'+m.name+'</span>').join('');
+ let graphic='<p class="wellness-empty">Con registros de al menos dos días podrás ver la evolución. No necesitas registrarte a diario.</p>';
+ if(model.hasTrend){
+  const width=560,step=width/(model.history.length-1);
+  const paths=model.metrics.map((metric,index)=>{
+   let drawing='',path='',points='';
+   model.history.forEach((day,i)=>{
+    const m=day.metrics[index];if(m.ratio===null){if(path)drawing+='<path d="'+path+'"/>';path='';return;}
+    const x=20+i*step,y=140-m.ratio*120;
+    path+=(path?' L':'M')+x+' '+y;
+    points+='<circle cx="'+x+'" cy="'+y+'" r="5"><title>'+textHTML(day.date+' · '+metric.name+': '+label(m))+'</title></circle>';
+   });
+   if(path)drawing+='<path d="'+path+'"/>';
+   return '<g fill="'+metric.color+'" stroke="'+metric.color+'" stroke-width="2.5" '+(index?'stroke-dasharray="'+(index===1?'7 5':'2 5')+'"':'')+'>'+drawing.replaceAll('<path ','<path fill="none" ')+points+'</g>';
+  }).join('');
+  graphic='<div class="wellness-chart"><svg viewBox="0 0 600 160" role="img" aria-label="Evolución de registros confirmados en los últimos '+wellnessDays+' días; los huecos son días sin datos. Consulta los valores por fecha debajo."><path class="chart-guide" d="M20 20H580M20 80H580M20 140H580"/>'+paths+'</svg><div class="chart-dates"><span>'+model.history[0].date.slice(5)+'</span><span>'+model.date.slice(5)+'</span></div></div><div class="chart-legend">'+legend+'</div>';
+ }
+ history.innerHTML='<div class="section-head"><h2>Evolución</h2><label for="wellnessPeriod" class="period-control">Periodo<select id="wellnessPeriod"><option value="7" '+(wellnessDays===7?'selected':'')+'>7 días</option><option value="14" '+(wellnessDays===14?'selected':'')+'>14 días</option></select></label></div>'+graphic+
+  '<details class="wellness-values"><summary>Ver registros por fecha</summary><ul>'+model.history.filter(day=>day.metrics.some(m=>m.observed)).map(day=>'<li><time datetime="'+day.date+'">'+day.date+'</time>'+day.metrics.map(m=>'<span>'+m.name+': '+label(m)+'</span>').join('')+'</li>').join('')+'</ul>'+(model.history.every(day=>day.metrics.every(m=>!m.observed))?'<p>Sin registros fechados en este periodo.</p>':'')+'</details><button type="button" class="text-link" data-open-personal>Ver registros personales opcionales</button>';
+}
+document.addEventListener('change',event=>{if(event.target.id==='wellnessPeriod'){wellnessDays=Number(event.target.value)===14?14:7;preserveInteraction(renderWellness);}});
+document.addEventListener('click',event=>{
+ if(!event.target.closest('[data-open-personal]'))return;
+ const tab=document.querySelector('#tabs [data-tab="hoy"]');if(tab)tab.click();
+ const records=document.getElementById('personalRecords');if(records){records.open=true;records.querySelector('summary').focus();records.scrollIntoView({block:'start',behavior:'auto'});}
+});
 
-function render(){const total=all.reduce((a,p)=>a+p.tasks.length,0),done=all.reduce((a,p)=>a+p.tasks.filter((_,i)=>state.checks[p.id+'-'+i]).length,0);document.getElementById('stats').innerHTML=`<div class="card stat"><div class="eyebrow">Tareas registradas</div><strong>${total}</strong><small class="muted">Sin asumir completadas</small></div><div class="card stat"><div class="eyebrow">Confirmadas</div><strong>${done}</strong><small class="muted">Marcadas por ti</small></div><div class="card stat"><div class="eyebrow">Avance</div><strong>${Math.round(done/total*100)}%</strong><small class="muted">Del checklist inicial</small></div>`;const next=priorityQueue.filter(([id])=>!state.checks[id]).slice(0,3);document.getElementById('priorityList').innerHTML=next.length?next.map(([id,title,sub])=>taskHTML(id,title,sub)).join(''):'<p class="mini muted">Completaste el foco inicial. Abre Proyectos y prepara la siguiente revisión conmigo.</p>';document.getElementById('quickTasks').innerHTML=quick.map(([id,title])=>taskHTML(id,title)).join('');document.getElementById('weeklyTasks').innerHTML=weekly.map(([id,title])=>taskHTML(id,title)).join('')+taskHTML(runWeeklyId(),'Correr una vez esta semana','20–30 min o trotar/caminar');document.getElementById('lifeTasks').innerHTML=life.flatMap(p=>p.tasks.map((t,i)=>taskHTML(p.id+'-'+i,t[0],p.name+' · '+t[1]))).join('');document.getElementById('lifeCards').innerHTML=life.map(p=>`<div class="card"><div class="eyebrow">${p.name}</div><p class="mini muted">${p.sub}</p><div class="bar"><div class="fill" style="width:${progress(p)}%"></div></div><div class="row"><small class="muted">${progress(p)}% del checklist</small><span class="tag">${p.tasks.length} pasos</span></div></div>`).join('');renderProjects();renderDailyPlan()}
+function renderCalendar(){const now=new Date();document.getElementById('todayDate').textContent=now.toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'});const monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));document.getElementById('weekDays').innerHTML=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map((n,i)=>{let d=new Date(monday);d.setDate(monday.getDate()+i);return `<div class="day" style="${d.toDateString()===now.toDateString()?'border-color:#C4F54C;background:#202619':''}">${n}<strong>${d.getDate()}</strong><span class="muted">${d.toLocaleDateString('es-MX',{month:'short'})}</span></div>`}).join('');}
+function render(){
+ document.getElementById('weeklyTasks').innerHTML=weekly.map(([id,title])=>taskHTML(id,title)).join('')+taskHTML(runWeeklyId(),'Correr una vez esta semana','20–30 min o trotar/caminar');
+ document.getElementById('lifeTasks').innerHTML=life.map(p=>'<section class="legacy-goal"><h3>'+textHTML(p.name)+'</h3><p>'+textHTML(p.sub)+'</p>'+p.tasks.map((t,i)=>taskHTML(p.id+'-'+i,t[0],t[1])).join('')+'</section>').join('');
+ renderProjects();renderDailyPlan();renderPersonalSettings();renderWellness();
+}
 function renderProjects(){ /* reemplazado por renderer único */ }
 function preserveInteraction(draw){
  const active=document.activeElement;
- const identity=active&&{id:active.id,task:active.dataset?.task,action:active.dataset?.coachAction,ring:active.dataset?.ring,inCoach:!!active.closest?.('#dayCoach')};
+ const identity=active&&{id:active.id,task:active.dataset?.task,action:active.dataset?.coachAction,ring:active.dataset?.ring,project:active.dataset?.openProject,inCoach:!!active.closest?.('#dayCoach')};
  const position={top:window.scrollY||0,left:window.scrollX||0};
  const details=Array.from(document.querySelectorAll('details'),el=>el.open);
  draw();
  document.querySelectorAll('details').forEach((el,i)=>{if(i<details.length)el.open=details[i];});
  let target=identity&&(identity.id?document.getElementById(identity.id):
-  Array.from(document.querySelectorAll('input[data-task],button[data-coach-action],button[data-ring]')).find(el=>
-   identity.task?el.dataset.task===identity.task:identity.action?el.dataset.coachAction===identity.action:identity.ring&&el.dataset.ring===identity.ring));
- if(!target&&identity?.inCoach)target=document.querySelector('.coach-next');
+  Array.from(document.querySelectorAll('input[data-task],button[data-coach-action],button[data-ring],button[data-open-project]')).find(el=>
+   identity.task?el.dataset.task===identity.task:identity.action?el.dataset.coachAction===identity.action:identity.project?el.dataset.openProject===identity.project:identity.ring&&el.dataset.ring===identity.ring));
+ if(!target&&identity?.inCoach)target=document.querySelector('.director-now h2');
  if(!target&&identity?.task)target=document.querySelector('#priorityList input[data-task]')||document.getElementById('missionTitle');
  if(target){if(!target.matches?.('input,button,a,textarea,select'))target.setAttribute('tabindex','-1');target.focus({preventScroll:true});}
  window.scrollTo(position);
@@ -231,7 +199,7 @@ function preserveInteraction(draw){
 document.addEventListener('change',e=>{if(e.target.dataset.task){
  state.checks[e.target.dataset.task]=e.target.checked;save();preserveInteraction(render);
 }});
-document.getElementById('tabs').addEventListener('click',e=>{let b=e.target.closest('button[data-tab]');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x===b));['hoy','semana','proyectos','vida','revision','mas'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==b.dataset.tab));const mainTab=['semana','revision'].includes(b.dataset.tab)?'mas':b.dataset.tab;document.querySelectorAll('[data-side-nav]').forEach(x=>{const active=x.dataset.sideNav===mainTab;x.classList.toggle('active',active);if(active)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})});document.getElementById('dailyNote').value=state.note||'';document.getElementById('dailyNote').addEventListener('input',e=>{state.note=e.target.value;save()});function report(){let completed=all.flatMap(p=>p.tasks.map((t,i)=>({name:p.name,title:t[0],done:!!state.checks[p.id+'-'+i]}))).filter(t=>t.done);return `REPORTE DE MI TABLERO\nFecha: ${new Date().toLocaleDateString('es-MX')}\nCompletadas (${completed.length}):\n${completed.map(x=>'- '+x.name+': '+x.title).join('\n')||'Ninguna confirmada'}\n\nNOTAS:\n${state.note||'Sin notas'}\n\nAyúdame a replanear mis 3 prioridades y mis hábitos. No asumas tareas nuevas como terminadas.${dailyReport()}`}document.getElementById('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(report());document.getElementById('copyStatus').textContent='Reporte copiado. Pégalo en ChatGPT.'}catch(e){let a=document.createElement('textarea');a.value=report();document.body.append(a);a.select();document.execCommand('copy');a.remove();document.getElementById('copyStatus').textContent='Reporte seleccionado/copiadο; si falla, usa Exportar.'}});document.getElementById('export').addEventListener('click',()=>{let blob=new Blob([JSON.stringify({date:new Date().toISOString(),...state},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='respaldo-tablero.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});document.getElementById('reset').addEventListener('click',()=>{if(confirm('¿Descargar respaldo y después borrar registros locales?')){document.getElementById('export').click();Object.keys(state.checks||{}).forEach(k=>delete state.checks[k]);if(state.integratedDenbouProgress)Object.keys(state.integratedDenbouProgress).forEach(k=>delete state.integratedDenbouProgress[k]);if(state.daily)Object.keys(state.daily).forEach(k=>delete state.daily[k]);state.note='';save();document.getElementById('dailyNote').value='';render();renderProjects();}});document.getElementById('unknowns').innerHTML=['Alcance inicial de Callejero (41–42)','Detalles restantes de Slider Bros (62–70)','Sector prioritario de la agencia (72)','Rutina y método de estudio adicional (133–140)'].map(x=>`<div class="checkline"><span class="pill">Pendiente</span>${x}</div>`).join('');const now=new Date();document.getElementById('todayDate').textContent=now.toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'});const monday=new Date(now);monday.setDate(now.getDate()-((now.getDay()+6)%7));document.getElementById('weekDays').innerHTML=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map((n,i)=>{let d=new Date(monday);d.setDate(monday.getDate()+i);return `<div class="day" style="${d.toDateString()===now.toDateString()?'border-color:#C4F54C;background:#202619':''}">${n}<strong>${d.getDate()}</strong><span class="muted">${d.toLocaleDateString('es-MX',{month:'short'})}</span></div>`}).join('');render();
+document.getElementById('tabs').addEventListener('click',e=>{let b=e.target.closest('button[data-tab]');if(!b)return;renderDayCoach();renderWellness();document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x===b));['hoy','semana','proyectos','wellness','revision','mas'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==b.dataset.tab));const mainTab=['semana','revision'].includes(b.dataset.tab)?'mas':b.dataset.tab;document.querySelectorAll('[data-side-nav]').forEach(x=>{const active=x.dataset.sideNav===mainTab;x.classList.toggle('active',active);if(active)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})});document.getElementById('dailyNote').value=state.note||'';document.getElementById('dailyNote').addEventListener('input',e=>{state.note=e.target.value;save()});function report(){let completed=all.flatMap(p=>p.tasks.map((t,i)=>({name:p.name,title:t[0],done:!!state.checks[p.id+'-'+i]}))).filter(t=>t.done);return `REPORTE DE MI TABLERO\nFecha: ${new Date().toLocaleDateString('es-MX')}\nCompletadas (${completed.length}):\n${completed.map(x=>'- '+x.name+': '+x.title).join('\n')||'Ninguna confirmada'}\n\nNOTAS:\n${state.note||'Sin notas'}\n\nAyúdame a replanear mis 3 prioridades y mis hábitos. No asumas tareas nuevas como terminadas.${dailyReport()}`}document.getElementById('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(report());document.getElementById('copyStatus').textContent='Reporte copiado. Pégalo en ChatGPT.'}catch(e){let a=document.createElement('textarea');a.value=report();document.body.append(a);a.select();document.execCommand('copy');a.remove();document.getElementById('copyStatus').textContent='Reporte seleccionado/copiadο; si falla, usa Exportar.'}});document.getElementById('export').addEventListener('click',()=>{let blob=new Blob([JSON.stringify({date:new Date().toISOString(),...state},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='respaldo-tablero.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});document.getElementById('reset').addEventListener('click',()=>{if(confirm('¿Descargar respaldo y después borrar registros locales?')){document.getElementById('export').click();Object.keys(state.checks||{}).forEach(k=>delete state.checks[k]);if(state.integratedDenbouProgress)Object.keys(state.integratedDenbouProgress).forEach(k=>delete state.integratedDenbouProgress[k]);if(state.daily)Object.keys(state.daily).forEach(k=>delete state.daily[k]);state.note='';save();document.getElementById('dailyNote').value='';render();renderProjects();}});document.getElementById('unknowns').innerHTML=['Alcance inicial de Callejero (41–42)','Detalles restantes de Slider Bros (62–70)','Sector prioritario de la agencia (72)','Rutina y método de estudio adicional (133–140)'].map(x=>`<div class="checkline"><span class="pill">Pendiente</span>${x}</div>`).join('');renderCalendar();render();
 
 document.addEventListener('click',function(event){
  const b=event.target.closest('[data-side-nav]');if(!b)return;
@@ -245,42 +213,7 @@ function todayLocalKey(){const d=new Date();return [d.getFullYear(),String(d.get
 function weekMondayKey(){const d=new Date();const weekday=(d.getDay()+6)%7;d.setDate(d.getDate()-weekday);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 function runWeeklyId(){return 'running-week-'+weekMondayKey()}
 function todayCheckin(){if(!state.daily||typeof state.daily!=='object')state.daily={};const key=todayLocalKey();if(!state.daily[key])state.daily[key]={};return state.daily[key]}
-function plainCare(title,sub){return '<div class="plan-plain"><span class="plan-symbol">·</span><span><b>'+title+'</b><small>'+sub+'</small></span></div>'}
-
-function renderDailyPlan(){
- const key=todayLocalKey(), work=priorityQueue.filter(x=>!state.checks[x[0]]).slice(0,3);
- const projectEl=document.getElementById('priorityList'),careEl=document.getElementById('careList');
- if(!projectEl||!careEl)return;
- const minute=coachMinutes(),nightPhase=minute<360||minute>=21*60;
- const daily=todayCheckin();
- const departure=coachParseTime(daily.coachDeparture,15*60+30);
- const occupied=minute>=departure&&daily.coachShift!==false;
- const showWork=!nightPhase&&!occupied;
- projectEl.innerHTML=!showWork?
-   plainCare(nightPhase?'La programación puede esperar a mañana':'Atiende tus compromisos primero',
-     nightPhase?'No hace falta revisar pendientes antes de dormir.':'El trabajo de programación sigue disponible en Proyectos.'):
-   work.length?taskHTML(work[0][0],work[0][1],work[0][2])+
-   (work.length>1?'<details class="more-priorities"><summary>Otras '+(work.length-1)+' prioridades</summary>'+work.slice(1).map(x=>taskHTML(x[0],x[1],x[2])).join('')+'</details>':''):
-   plainCare('Momento de revisar','Ya cumpliste el foco. Puedes revisar el siguiente hito en Proyectos.');
- document.getElementById('workCount').textContent=!showWork?(nightPhase?'Mañana':'En pausa'):work.length?'1 principal':'Sin pendientes';
- const hour=coachMinutes(),night=hour<360||hour>=21*60;
- const care=night?
-   [['read','Leer 15–30 minutos','Una forma tranquila de desconectar.'],
-    ['rest','Prepararte para dormir','Bajar pantallas y buscar descanso, sin exigirte perfección.']]:
-   hour>=12*60?
-   [['food','Comer o resolver tu comida','No dejar la alimentación para lo último.'],
-    ['move','Moverte al menos 30 minutos','Si aún no lo hiciste, ajusta a lo que sea viable.']]:
-   [['teeth','Lavarte los dientes y tomar agua','Un primer paso sencillo.'],
-    ['breakfast','Desayunar','Comer antes de trabajar.'],
-    ['move','Hacer 30 minutos de ejercicio','O caminar, según cómo te encuentres.']];
- const open=care.filter(([id])=>!state.checks['daily-'+key+'-'+id]);
- careEl.innerHTML=open.length?taskHTML('daily-'+key+'-'+open[0][0],open[0][1],open[0][2])+
-   (open.length>1?'<details class="more-priorities"><summary>Otros cuidados ('+(open.length-1)+')</summary>'+open.slice(1).map(([id,title,sub])=>taskHTML('daily-'+key+'-'+id,title,sub)).join('')+'</details>':''):
-   plainCare('Lo esencial está cubierto','Puedes continuar con calma.');
- document.getElementById('dayHeadline').textContent='Un día a la vez.';
- document.getElementById('dayReason').textContent='ROADMAP usa la hora del dispositivo para sugerir qué hacer ahora.';
- renderDayCoach();
-}
+function renderDailyPlan(){renderDayCoach();}
 function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa, movimiento diario, lectura de 15 minutos. Meta semanal: correr una vez. Ajustar tiempos de despertar en nuestra conversación.';}
 
 
@@ -392,12 +325,12 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
       context:"Pendiente · verificar entrega",weight:1,kind:"pending"
     }));
     // Evidencia documental ≠ tarea completada.
-    return original.concat(newTasks);
+    return Array.from(new Map(original.concat(newTasks).map(item=>[item.id,item])).values());
   }
   function stageInfo(project,step) {
     const items=getItems(project,step);
     const completed=items.filter(t=>!!state.checks[t.id]).length;
-    let progress=0;
+    let progress=null;
     if(project.id==="backstage" && step.reference!=null){
       const remaining=items.filter(t=>t.kind!=="documented");
       const newlyDone=remaining.filter(t=>!!state.checks[t.id]).length;
@@ -406,18 +339,22 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
     }else{
       const available=items.reduce((n,t)=>n+t.weight,0);
       const done=items.filter(t=>!!state.checks[t.id]).reduce((n,t)=>n+t.weight,0);
-      progress=available?Math.round(done/available*100):0;
+      progress=available?Math.round(done/available*100):null;
     }
     return {items,completed,progress};
   }
   function projectInfo(project) {
     const config=roadmap[project.id],steps=config?config.phases:[];
-    const sum=steps.reduce((n,s)=>n+s.weight,0)||1;
-    const value=Math.round(steps.reduce((n,s)=>n+s.weight*stageInfo(project,s).progress,0)/sum);
-    const items=steps.flatMap(s=>getItems(project,s));
+    const value=RoadmapWellness.weighted(steps.map(s=>({weight:s.weight,value:stageInfo(project,s).progress})));
+    const items=Array.from(new Map(steps.flatMap(s=>getItems(project,s)).map(t=>[t.id,t])).values());
     return {progress:value,completed:items.filter(t=>!!state.checks[t.id]).length,total:items.length};
   }
 
+  const progressText=value=>Number.isFinite(value)?value+'%':'Sin estimación';
+  function progressBar(value,label,extra=''){
+    if(!Number.isFinite(value))return '<span class="unknown-progress">Sin estimación</span>';
+    return '<div class="progress-track" role="progressbar" aria-label="'+escapeText(label)+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+value+'" '+extra+'><span style="width:'+value+'%"></span></div>';
+  }
   const projectHost=document.getElementById("projects");
   const lifeHost=document.getElementById("lifeTasks");
   const filter=document.getElementById("filter");
@@ -458,23 +395,30 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
   ].map(([id,name,p,w,desc,tasks])=>({id,name,p,w,desc,tasks}));
   if(!state.integratedDenbouProgress||typeof state.integratedDenbouProgress!=="object"||Array.isArray(state.integratedDenbouProgress))state.integratedDenbouProgress={};
   const integratedEdits=state.integratedDenbouProgress;
-  const clampIntegrated=n=>Math.max(0,Math.min(100,Number.isFinite(+n)?Math.round(+n):0));
+  const clampIntegrated=n=>((typeof n==='number'||typeof n==='string'&&n.trim()!=='')&&Number.isFinite(+n))?Math.max(0,Math.min(100,Math.round(+n))):null;
   const taskIntegrated=(stage,i)=>clampIntegrated(Object.prototype.hasOwnProperty.call(integratedEdits,stage.id+":"+i)?integratedEdits[stage.id+":"+i]:stage.tasks[i][1]);
   function integratedStageProgress(stage){
+    if(!stage.tasks.length)return Number.isFinite(stage.p)?stage.p:null;
     const base=stage.tasks.reduce((n,t)=>n+t[1],0)/stage.tasks.length;
-    const current=stage.tasks.reduce((n,t,i)=>n+taskIntegrated(stage,i),0)/stage.tasks.length;
+    const values=stage.tasks.map((t,i)=>taskIntegrated(stage,i));
+    if(values.some(v=>v===null)||!Number.isFinite(base))return null;
+    const current=values.reduce((n,v)=>n+v,0)/stage.tasks.length;
     if(current<=base)return clampIntegrated(base?stage.p*current/base:current);
     return clampIntegrated(base>=100?100:stage.p+(100-stage.p)*(current-base)/(100-base));
   }
-  const integratedOverall=()=>Math.round(integratedStages.reduce((n,s)=>n+s.w*integratedStageProgress(s),0)/100);
+  const integratedOverall=()=>RoadmapWellness.weighted(integratedStages.map(s=>({weight:s.w,value:integratedStageProgress(s)})));
+  function evidenceHTML(ids){
+    const entries=ids.flatMap(id=>documentedEvidence[id]||[]);
+    return entries.length?'<details class="project-evidence"><summary>Referencias documentadas</summary><p>Contexto histórico; estas referencias no cuentan como actividades completadas.</p><ul>'+entries.map(e=>'<li><strong>'+escapeText(e[2])+'</strong><small>'+escapeText(e[3])+'</small></li>').join('')+'</ul></details>':'';
+  }
   function renderOldChecklist(p){
     const cfg=roadmap[p.id],info=projectInfo(p);
-    return '<details class="rv3-old-project"><summary>'+escapeText(p.name)+' · '+info.progress+'% de checklist técnico</summary>'+
+    return '<details class="rv3-old-project"><summary>'+escapeText(p.name)+' · '+progressText(info.progress)+' de checklist técnico</summary>'+
       '<div class="rv2-stage-grid">'+cfg.phases.map(step=>{
         const stat=stageInfo(p,step);
         return '<details class="rv2-stage"><summary><span><b>'+escapeText(step.name)+'</b><small>'+
-          stat.completed+'/'+stat.items.length+' marcados</small></span><strong>'+stat.progress+'%</strong></summary>'+
-          '<div class="rv2-stage-tasks">'+stat.items.map(t=>taskHTML(t.id,t.title,t.context)).join("")+'</div></details>';
+          stat.completed+'/'+stat.items.length+' marcados</small></span><strong>'+progressText(stat.progress)+'</strong></summary>'+
+          progressBar(stat.progress,p.name+': '+step.name)+'<div class="rv2-stage-tasks">'+stat.items.map(t=>taskHTML(t.id,t.title,t.context)).join("")+'</div></details>';
       }).join("")+'</div></details>';
   }
   function renderIntegratedProject(term){
@@ -492,15 +436,15 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
       const tasks=shown.map(({t,i})=>{
         const v=taskIntegrated(s,i),id="rgi-"+s.id+"-"+i;
         return '<div class="rv3-roadmap-task"><div class="rv3-roadmap-task-row"><label for="'+id+'">'+escapeText(t[0])+'</label>'+
-          '<strong data-merged-task-pct>'+v+'%</strong></div><input id="'+id+'" type="range" min="0" max="100" step="5" value="'+v+
+          '<strong data-merged-task-pct>'+progressText(v)+'</strong></div><input id="'+id+'" type="'+(v===null?'number':'range')+'" min="0" max="100" step="5" value="'+(v??'')+
           '" data-merged-slider="'+s.id+'" data-merged-index="'+i+'" aria-label="'+escapeText("Avance estimado de "+t[0])+
           '" style="--pct:'+v+'%"><div class="rv3-roadmap-range-caption"><span>Pendiente</span><span>Completo</span></div></div>';
       }).join("");
       return '<details class="rv3-roadmap-stage" '+(term||s.id==="calendar"?'open':'')+'>'+
         '<summary><span class="rv3-roadmap-ord">'+String(integratedStages.indexOf(s)+1).padStart(2,"0")+'</span>'+
         '<span class="rv3-roadmap-stage-name"><b>'+escapeText(s.name)+'</b><small>Peso '+s.w+'% del ecosistema</small></span>'+
-        '<strong data-merged-stage-pct="'+s.id+'">'+value+'%</strong><span class="rv3-roadmap-arrow" aria-hidden="true"><svg class="roadmap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>'+
-        '<div class="rv3-roadmap-stage-body"><p>'+escapeText(s.desc)+'</p>'+tasks+'</div></details>';
+        '<strong data-merged-stage-pct="'+s.id+'">'+progressText(value)+'</strong><span class="rv3-roadmap-arrow" aria-hidden="true"><svg class="roadmap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>'+
+        progressBar(value,s.name+': estimación','data-stage-bar="'+s.id+'"')+'<div class="rv3-roadmap-stage-body"><p>'+escapeText(s.desc)+'</p>'+tasks+'</div></details>';
     });
     const groups=[
       {id:"denbou",name:"Denbou operativo",members:["core","finance","ux","security"]},
@@ -514,16 +458,16 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
       if(!members.length)return "";
       const scope=g.members.map(id=>integratedStages.find(s=>s.id===id)).filter(Boolean);
       const weight=scope.reduce((n,s)=>n+s.w,0);
-      const value=Math.round(scope.reduce((n,s)=>n+s.w*integratedStageProgress(s),0)/weight);
-      return '<details class="rv3-workstream" '+(term?'open':'')+'><summary><span>'+escapeText(g.name)+'</span><strong data-stage-members="'+g.members.join(',')+'">'+value+'%</strong></summary>'+
-        '<div class="rv3-workstream-detail">'+members.map(s=>stageNodes[shown.indexOf(s)]).join("")+'</div></details>';
+      const value=RoadmapWellness.weighted(scope.map(s=>({weight:s.w,value:integratedStageProgress(s)})));
+      return '<details class="rv3-workstream" '+(term?'open':'')+'><summary><span>'+escapeText(g.name)+'</span><strong data-stage-members="'+g.members.join(',')+'">'+progressText(value)+'</strong></summary>'+
+        progressBar(value,g.name+': estimación','data-group-bar="'+g.members.join(',')+'"')+'<div class="rv3-workstream-detail">'+members.map(s=>stageNodes[shown.indexOf(s)]).join("")+'</div></details>';
     }).join("");
     const p=integratedOverall();
     return '<article id="project-backstage" class="rv2-project rv3-roadmap-integrated" data-project-id="backstage" tabindex="-1" data-merged-card>'+
       '<div class="rv2-project-head"><div><div class="eyebrow">Proyecto prioritario</div>'+
       '<h1>Callejero + Denbou</h1><p>Captación y operaciones privadas.</p></div>'+
-      '<span class="rv2-percent"><strong data-merged-total>'+p+'%</strong><small>Estimado</small></span></div>'+
-      '<div class="project-current"><span><small>Etapa por avanzar</small><b>'+escapeText((integratedStages.find(s=>integratedStageProgress(s)<100)||{name:'Etapas al 100% estimado'}).name)+'</b></span><span><small>Siguiente acción</small><b>'+escapeText((priorityQueue.find(x=>!state.checks[x[0]]&&x[0].includes('backstage'))||['','Revisar entregables y validar producción'])[1])+'</b></span></div>'+
+      '<span class="rv2-percent"><strong data-merged-total>'+progressText(p)+'</strong><small>Estimado</small></span></div>'+
+      progressBar(p,'Callejero + Denbou: estimación','data-merged-bar')+'<div class="project-current"><span><small>Etapa por avanzar</small><b>'+escapeText((integratedStages.find(s=>integratedStageProgress(s)<100)||{name:'Etapas al 100% estimado'}).name)+'</b></span><span><small>Siguiente acción</small><b>'+escapeText((priorityQueue.find(x=>!state.checks[x[0]]&&x[0].includes('backstage'))||['','Revisar entregables y validar producción'])[1])+'</b></span></div>'+
       '<p class="rv3-roadmap-disclaimer">Estimaciones manuales del 7 nov 2026; no certifican funcionamiento.</p>'+
       '<details class="rv3-roadmap-advanced"><summary>Respaldos y ajustes avanzados</summary><div class="rv3-roadmap-actions"><button class="btn alt" type="button" data-merged-export>Exportar JSON</button>'+
       '<button class="btn ghost" type="button" data-merged-import>Importar JSON</button>'+
@@ -533,25 +477,27 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
       '<details class="rv3-roadmap-list" open><summary>Áreas de trabajo (5)</summary>'+
       '<div class="rv3-roadmap-stage-grid">'+stages+'</div></details>'+
       '<details class="rv3-roadmap-old"><summary>Checklists técnicos anteriores (se conservan)</summary><p>Sus casillas y porcentajes siguen disponibles por separado.</p>'+
-      old.map(renderOldChecklist).join("")+'</details></article>';
+      old.map(renderOldChecklist).join("")+'</details>'+evidenceHTML(['backstage','callejero'])+'</article>';
   }
   function refreshMerged(){
+    const updateBar=(selector,value)=>{const bar=projectHost.querySelector(selector);if(bar&&Number.isFinite(value)){bar.setAttribute('aria-valuenow',String(value));const fill=bar.querySelector('span');if(fill)fill.style.width=value+'%';}};
+    updateBar('[data-merged-bar]',integratedOverall());
     const card=projectHost.querySelector("[data-merged-card]");
     if(card){
       const value=integratedOverall();
-      card.querySelector("[data-merged-total]").textContent=value+"%";
+      card.querySelector("[data-merged-total]").textContent=progressText(value);
       integratedStages.forEach(stage=>{
         const item=card.querySelector('[data-merged-stage-pct="'+stage.id+'"]');
         if(!item)return;
         const value=integratedStageProgress(stage);
-        item.textContent=value+"%";
+        item.textContent=progressText(value);updateBar('[data-stage-bar="'+stage.id+'"]',value);
 
       });
     }
     projectHost.querySelectorAll('[data-stage-members]').forEach(el=>{
       const members=el.dataset.stageMembers.split(',').map(id=>integratedStages.find(s=>s.id===id)).filter(Boolean);
       const weight=members.reduce((sum,s)=>sum+s.w,0);
-      el.textContent=Math.round(members.reduce((sum,s)=>sum+s.w*integratedStageProgress(s),0)/weight)+'%';
+      const value=RoadmapWellness.weighted(members.map(s=>({value:integratedStageProgress(s),weight:s.w})));el.textContent=progressText(value);updateBar('[data-group-bar="'+el.dataset.stageMembers+'"]',value);
     });
     const portfolio=renderPortfolio();
     renderIndicators(portfolio);
@@ -572,7 +518,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
       const stage=integratedStages.find(s=>s.id===item.id);
       if(!stage||!Array.isArray(item.tasks))return;
       item.tasks.forEach((t,i)=>{
-        if(!t||i>=stage.tasks.length||t.name!==stage.tasks[i][0]||!Number.isFinite(Number(t.estimatedProgress)))return;
+        if(!t||i>=stage.tasks.length||t.name!==stage.tasks[i][0]||clampIntegrated(t.estimatedProgress)===null)return;
         edits[stage.id+":"+i]=clampIntegrated(t.estimatedProgress);count++;
       });
     });
@@ -586,7 +532,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
     if(!input)return;
     const stage=integratedStages.find(s=>s.id===input.dataset.mergedSlider),i=Number(input.dataset.mergedIndex);
     if(!stage||!Number.isInteger(i)||i<0||i>=stage.tasks.length)return;
-    const v=clampIntegrated(input.value);
+    const v=clampIntegrated(input.value);if(v===null)return;
     integratedEdits[stage.id+":"+i]=v;input.style.setProperty("--pct",v+"%");
     const tag=input.closest(".rv3-roadmap-task").querySelector("[data-merged-task-pct]");
     if(tag)tag.textContent=v+"%";
@@ -641,7 +587,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
       const id=el.dataset.projectId,p=projects.find(p=>p.id===id);
       const value=id==='backstage'?integratedOverall():projectInfo(p).progress;
       const name=id==='backstage'?'Callejero + Denbou':p.name;
-      return '<button type="button" class="project-row" data-open-project="'+id+'"><span><strong>'+escapeText(name)+'</strong><small>'+(['backstage','torre'].includes(id)?'Prioritario':'En espera')+'</small></span><span class="project-row-progress">'+value+'%<small>estimado</small></span><svg class="roadmap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>';
+      return '<button type="button" class="project-row" data-open-project="'+id+'"><span><strong>'+escapeText(name)+'</strong><small>'+(['backstage','torre'].includes(id)?'Prioritario':'En espera')+'</small></span><span class="project-row-progress">'+progressText(value)+(Number.isFinite(value)?'<small>estimado</small>':'')+'</span><span class="directory-track">'+progressBar(value,name+': estimación')+'</span><svg class="roadmap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>';
     }).join(''):'<p role="status">No hay tareas o proyectos que coincidan con «'+escapeText(term)+'».</p>';
   }
   document.addEventListener('click',event=>{
@@ -653,14 +599,14 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
   if(back)back.addEventListener('click',()=>showProject(''));
   function renderPortfolio(){
     const torre=projects.find(x=>x.id==='torre');
-    const other=torre?projectInfo(torre).progress:0,combined=integratedOverall();
-    const overall=Math.round(combined*.70+other*.30);
-    portfolioHost.innerHTML='<div class="portfolio-summary"><span>Portafolio activo</span><strong data-portfolio-total>'+overall+'% estimado</strong></div><details><summary>Cómo se calcula</summary><p>Callejero + Denbou: '+combined+'% (peso 70%). Torre Fuerte: '+other+'% (peso 30%). Son estimaciones ponderadas, no pruebas de funcionamiento.</p></details>';
+    const other=torre?projectInfo(torre).progress:null,combined=integratedOverall();
+    const overall=RoadmapWellness.weighted([{value:combined,weight:70},{value:other,weight:30}]);
+    portfolioHost.innerHTML='<div class="portfolio-summary"><span>Portafolio activo</span><strong data-portfolio-total>'+progressText(overall)+(Number.isFinite(overall)?' estimado':'')+'</strong></div>'+progressBar(overall,'Portafolio activo: estimación')+'<details><summary>Cómo se calcula</summary><p>Callejero + Denbou: '+progressText(combined)+' (peso 70%). Torre Fuerte: '+progressText(other)+' (peso 30%). Son estimaciones ponderadas, no pruebas de funcionamiento.</p></details>';
     renderDirectory();return overall;
   }
   function renderIndicators(){
     const today=todayLocalKey(),week=weekMondayKey();
-    const health=[['daily-'+today+'-breakfast','Alimentación','Desayunar'],['daily-'+today+'-move','Movimiento','Caminar, correr o hacer ejercicio'],['daily-'+today+'-rest','Descanso','Dar espacio a la recuperación']];
+    const health=[['daily-'+today+'-teeth','Higiene y agua','Registro de hoy'],['daily-'+today+'-breakfast','Desayuno','Registro de hoy'],['daily-'+today+'-move','Movimiento','Registro de hoy'],['daily-'+today+'-food','Comida y pausa','Registro de hoy'],['daily-'+today+'-read','Lectura','Registro de hoy'],['daily-'+today+'-rest','Descanso','Registro de hoy']];
     const connections=[['contact-week-'+week+'-papa','Hablar con papá','Esta semana'],['contact-week-'+week+'-mama','Hablar con mamá','Esta semana'],['contact-week-'+week+'-amigos','Conectar con una amistad','Esta semana']];
     indicatorsHost.innerHTML='<section class="life-section"><h2>Salud</h2>'+health.map(x=>taskHTML(...x)).join('')+'</section><section class="life-section"><h2>Vínculos</h2>'+connections.map(x=>taskHTML(...x)).join('')+'</section>';
   }
@@ -673,24 +619,24 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
     const overall=renderPortfolio();
     renderIndicators(overall);
     const projectCards=projects.map(project=>{
-      const cfg=roadmap[project.id];
-      if(!cfg) return "";
+      const cfg=roadmap[project.id]||{phases:[],priority:'Sin prioridad configurada',mode:'Sin etapas',next:'Sin hito documentado',blocker:''};
       if(project.id==="callejero")return "";
       if(project.id==="backstage")return renderIntegratedProject(term);
       const info=projectInfo(project);
-      const matching=cfg.phases.filter(step=>{
+      const phases=Array.isArray(cfg.phases)?cfg.phases:[];
+      const matching=phases.filter(step=>{
         const text=step.name+" "+getItems(project,step).map(x=>x.title+" "+x.context).join(" ");
         return !term||(project.name+" "+project.description+" "+text).toLocaleLowerCase("es-MX").includes(term);
       });
-      if (!matching.length) return "";
+      if(!matching.length&&(phases.length||term&&!project.name.toLocaleLowerCase("es-MX").includes(term)))return "";
       const stages=matching.map(step=>{
         const stat=stageInfo(project,step);
         const filtered=stat.items.filter(item=>!term||(project.name+" "+step.name+" "+item.title+" "+item.context).toLocaleLowerCase("es-MX").includes(term));
         const shown=filtered.length?filtered:stat.items;
-        return '<details class="rv2-stage" '+(term?'open':'')+'><summary><span><b>'+escapeText(step.name)+'</b><small>Peso de etapa: '+step.weight+'% · '+stat.completed+'/'+stat.items.length+' marcados'+(step.reference==null?'':' · base estimada '+step.reference+'%')+'</small></span><strong>'+stat.progress+'%</strong></summary>'+'<div class="rv2-stage-tasks">'+shown.map(item=>taskHTML(item.id,item.title,item.context)).join("")+'</div></details>';
+        return '<details class="rv2-stage" '+(term?'open':'')+'><summary><span><b>'+escapeText(step.name)+'</b><small>Peso de etapa: '+step.weight+'% · '+stat.completed+'/'+stat.items.length+' marcados'+(step.reference==null?'':' · base estimada '+step.reference+'%')+'</small></span><strong>'+progressText(stat.progress)+'</strong></summary>'+'<div class="rv2-stage-tasks">'+shown.map(item=>taskHTML(item.id,item.title,item.context)).join("")+'</div></details>';
       }).join("");
       const snapshot=cfg.reference==null?'':'<div class="rv2-reference"><b>'+cfg.reference+'% estimado</b> · fotografía del alcance al '+escapeText(cfg.refDate)+'. Se actualizará al completar nuevas tareas; falta validar producción.</div>';
-      return '<article id="project-'+project.id+'" data-project-id="'+project.id+'" tabindex="-1" class="project rv2-project"><div class="rv2-project-head"><div><div class="eyebrow">'+escapeText(cfg.priority)+' · '+escapeText(cfg.mode)+'</div><h1>'+escapeText(project.name)+'</h1><p>'+escapeText(project.description)+'</p></div><span class="rv2-percent"><strong data-project-total>'+info.progress+'%</strong><small>Estimado</small></span></div>'+'<div class="rv2-counter">'+info.completed+' de '+info.total+' entregables marcados</div>'+snapshot+'<div class="project-current"><span><small>Siguiente tarea</small><b>'+escapeText((cfg.phases.flatMap(step=>getItems(project,step)).find(item=>!state.checks[item.id])||{title:'Revisar los entregables completados'}).title)+'</b></span></div><div class="rv2-next"><strong>Próximo hito</strong><p>'+escapeText(cfg.next)+'</p><strong>Por resolver</strong><p>'+escapeText(cfg.blocker)+'</p></div><details class="rv2-stages" '+(term?'open':'')+'><summary>Ver etapas y entregables ('+cfg.phases.length+')</summary><div class="rv2-stage-grid">'+stages+'</div></details></article>';
+      return '<article id="project-'+project.id+'" data-project-id="'+project.id+'" tabindex="-1" class="project rv2-project"><div class="rv2-project-head"><div><div class="eyebrow">'+escapeText(cfg.priority)+' · '+escapeText(cfg.mode)+'</div><h1>'+escapeText(project.name)+'</h1><p>'+escapeText(project.description)+'</p></div><span class="rv2-percent"><strong data-project-total>'+progressText(info.progress)+'</strong><small>Estimado</small></span></div>'+progressBar(info.progress,project.name+': estimación')+'<div class="rv2-counter">'+info.completed+' de '+info.total+' entregables marcados</div>'+snapshot+'<div class="project-current"><span><small>Siguiente tarea</small><b>'+escapeText((cfg.phases.flatMap(step=>getItems(project,step)).find(item=>!state.checks[item.id])||{title:'Revisar los entregables completados'}).title)+'</b></span></div><div class="rv2-next"><strong>Próximo hito</strong><p>'+escapeText(cfg.next)+'</p><strong>Por resolver</strong><p>'+escapeText(cfg.blocker)+'</p></div><details class="rv2-stages" '+(term?'open':'')+'><summary>Ver etapas y entregables ('+phases.length+')</summary><div class="rv2-stage-grid">'+stages+'</div></details>'+evidenceHTML([project.id])+'</article>';
     });
     projectHost.innerHTML=projectCards.join('');
     if(previousProjectTerm===term)projectHost.querySelectorAll('details').forEach((el,i)=>{if(i<expanded.length)el.open=expanded[i];});
@@ -752,6 +698,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
       const daily=data.daily??{};
       if(typeof daily!=='object'||Array.isArray(daily))
         throw new Error('El registro diario no es válido.');
+      if(data.weeklySchedule!==undefined&&(!data.weeklySchedule||typeof data.weeklySchedule!=='object'||Array.isArray(data.weeklySchedule)||Object.entries(data.weeklySchedule).some(([day,value])=>!/^[0-6]$/.test(day)||!value||typeof value!=='object'||Array.isArray(value))))throw new Error('El horario habitual no es válido.');
       const note=typeof data.note==='string'?data.note:'';
       if(!confirm('¿Restaurar '+checkEntries.length+' marcas del respaldo? Se sustituirán las marcas, notas y estimaciones locales actuales.'))return;
       const replace=(target,source)=>{Object.keys(target).forEach(k=>delete target[k]);Object.entries(source).forEach(([k,v])=>{if(k!=='__proto__'&&k!=='constructor'&&k!=='prototype')target[k]=v;});};
@@ -761,6 +708,10 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
       replace(state.integratedDenbouProgress,progress);
       if(!state.daily||typeof state.daily!=='object')state.daily={};
       replace(state.daily,daily);
+      if(data.weeklySchedule!==undefined){
+        if(!state.weeklySchedule||typeof state.weeklySchedule!=='object')state.weeklySchedule={};
+        replace(state.weeklySchedule,data.weeklySchedule);
+      }
       state.note=note;
       if(!save()){status.textContent='No se restauró: no fue posible guardar. Se conservó el estado anterior.';return;}
       document.getElementById('dailyNote').value=state.note;
