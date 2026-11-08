@@ -4,7 +4,7 @@ Referencia examinada: `webpagepxm/callejero-backstage`, `DESIGN.md` y módulos `
 
 ## Decisiones
 
-- Una familia: Plus Jakarta Sans 200–800, con fallback de sistema. Cuerpo y controles 16 px; información secundaria 14 px; secciones 24 px; títulos 32–44 px. No hay reducción general de tipografía en móvil. Campos de formulario ≥16 px.
+- Una familia: Plus Jakarta Sans 200–800, con fallback de sistema. Cuerpo y controles 18 px, y 20 px en escritorio amplio; información secundaria 16 px; secciones 26–28 px; títulos 36–48 px. No hay reducción general de tipografía en móvil. Campos de formulario ≥18 px. La navegación inferior conserva 14–16 px para que sus cuatro destinos quepan desde 320 px.
 - Fondo #101114, superficie #1C1E23, texto #F5F5F7, secundario #B5B7BF y lima #C4F54C reservada para la acción recomendada, selección y foco de navegación. El foco de teclado utiliza cian.
 - Un único CSS consolidado, sin capas del universo anterior ni overrides históricos. Se retiraron órbitas, objetos 3D, anillos, sombras táctiles, fuentes display y progreso visual duplicado. Las filas y desplegables comparten fondo: no hay tarjetas anidadas.
 - Hoy abre con la siguiente acción, pregunta de despertar cuando corresponde, cuidados y agenda abierta. Salida y turno se editan directamente, sin desplegables adicionales. La misión profesional aparece después. En horario nocturno se ofrecen lectura y descanso; no se muestran pendientes profesionales.

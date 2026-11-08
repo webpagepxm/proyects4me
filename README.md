@@ -50,6 +50,6 @@ No hay lint ni typecheck configurados. La prueba en Chromium no sustituye Safari
 
 ## Publicación y reversión
 
-GitHub Pages sirve el sitio estático. Los cambios se integran en `main` después de las comprobaciones. Confirmar el deployment en GitHub y la versión `20261108-calm-v1` de los assets antes de declarar una publicación verificada.
+GitHub Pages sirve el sitio estático. Los cambios se integran en `main` después de las comprobaciones. Confirmar el deployment en GitHub y la versión `20261108-readable-v2` de los assets antes de declarar una publicación verificada.
 
 Versión previa: `76ce550cddb55f899b3b530e91e4d9291d968f6b`, conservada en `backup/pre-denbou-20261108`. Reversión mediante `git revert` del commit correspondiente, sin forzar el historial ni tocar localStorage.
