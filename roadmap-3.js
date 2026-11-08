@@ -157,12 +157,18 @@ function renderDayCoach(){
  const scheduleOpen=priorSchedule?priorSchedule.open:(phase==='morning'||phase==='afternoon');
  const outline=phase==='night'?'Rutina de noche':
    phase==='late'?'Ver la tarde':'Horario hasta '+coachClock(effectiveEnd);
+ const essentials=phase==='night'?'':
+   '<div class="coach-essentials" aria-label="Cuidados de hoy">'+
+   [['teeth','Dientes'],['breakfast','Desayuno'],['move','Movimiento']].map(([id,label])=>
+     '<label class="coach-essential"><input type="checkbox" data-task="daily-'+key+'-'+id+'" '+(done(id)?' checked':'')+'><span>'+label+'</span></label>'
+   ).join('')+'</div>';
  const mark=nextCare?
    '<button type="button" class="coach-done" data-coach-action="done" data-coach-check="'+nextCare[0]+'">Hecho</button>':'';
  coachHost.innerHTML=
    '<div class="coach-head"><span class="eyebrow">HOY · '+periodNames[phase]+'</span>'+
    '<span class="coach-clock">'+coachClock(now)+'</span></div>'+
    '<div class="coach-next"><span>AHORA</span><strong>'+title+'</strong>'+mark+'</div>'+
+   essentials+
    wakePrompt+
    '<details class="coach-schedule"'+(scheduleOpen?' open':'')+'><summary>'+outline+'</summary>'+
    '<div class="coach-slots">'+(rows||'<p>Descansa.</p>')+'</div></details>'+

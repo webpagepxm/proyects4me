@@ -553,3 +553,10 @@ h1,h2,h3,.sidebrand-name{font-family:'Arial Black','Avenir Next',sans-serif;lett
 #hoy .roadmap-home-coach .coach-done{background:#2F4937;color:#FFF}
 #hoy .roadmap-home-coach .coach-done:hover{background:#446449}
 @media(max-width:780px){#hoy .roadmap-home-coach{margin-bottom:18px}#hoy .roadmap-home-coach .day-coach{padding:16px 16px 10px}}
+
+/* Always-present daily essentials, without extra dashboard cards. */
+#hoy .coach-essentials{display:flex;flex-wrap:wrap;gap:10px 20px;margin:12px 0 14px;align-items:center}
+#hoy .coach-essential{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:#3F513E;cursor:pointer}
+#hoy .coach-essential input{width:17px;height:17px;accent-color:#466B40;cursor:pointer}
+#hoy .coach-essential input:checked+span{text-decoration:line-through;opacity:.64}
+@media(max-width:400px){#hoy .coach-essentials{gap:9px 12px}#hoy .coach-essential{font-size:12px}}

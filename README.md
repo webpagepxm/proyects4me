@@ -18,7 +18,7 @@ Las implementaciones anteriores de CSS/JS fueron eliminadas de `main` y permanec
 
 ## Diseño de producto
 
-- **Hoy:** la guía personal por horario es lo primero que se ve (higiene, desayuno, movimiento, comida, horario hasta salir); la misión de proyectos y el portafolio quedan debajo. La agenda completa puede contraerse.
+- **Hoy:** la guía personal por horario es lo primero que se ve (higiene, desayuno, movimiento, comida, horario hasta salir), con tres cuidados diarios visibles también después del mediodía; la misión de proyectos y el portafolio quedan debajo. La agenda completa puede contraerse.
 - **Proyectos:** Callejero + Denbou unificados (cinco áreas visuales, diez etapas subyacentes, tareas intactas), Torre Fuerte y proyectos secundarios bajo «En espera».
 - **Mi vida:** tres temas principales y detalles de hábitos a petición.
 - **Más:** planificación semanal, revisión, notas, respaldos y guía diaria.
