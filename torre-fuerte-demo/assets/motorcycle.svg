@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 460" fill="none">
+<defs>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#E4E6E3"/><stop offset=".42" stop-color="#929A9B"/><stop offset=".6" stop-color="#CFD3D0"/><stop offset="1" stop-color="#626B6D"/></linearGradient>
+ <linearGradient id="tank" x1="400" y1="130" x2="440" y2="220" gradientUnits="userSpaceOnUse"><stop stop-color="#F0EDE4"/><stop offset="1" stop-color="#C7C2B5"/></linearGradient>
+ <linearGradient id="black" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#42484A"/><stop offset="1" stop-color="#1B2022"/></linearGradient>
+ <pattern id="tread" width="13" height="13" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0V13" stroke="#515658" stroke-width="3"/></pattern>
+</defs>
+<ellipse cx="422" cy="382" rx="297" ry="15" fill="#C9CDC6" opacity=".32"/>
+<!-- Original conceptual commuter illustration; not an exact vehicle model. -->
+<g stroke-linejoin="round" stroke-linecap="round">
+ <g id="rear-wheel">
+  <circle cx="224" cy="296" r="82" fill="#202527"/>
+  <circle cx="224" cy="296" r="78" stroke="url(#tread)" stroke-width="9"/>
+  <circle cx="224" cy="296" r="61" fill="#EBECE6" stroke="url(#metal)" stroke-width="8"/>
+  <g stroke="#929B9B" stroke-width="2"><path d="m224 236 0 120m-60-60h120m-102-42 84 84m-84 0 84-84m-98 19 112 46m-79-79 46 112m-46 0 46-112m-79 79 112-46"/></g>
+  <circle cx="224" cy="296" r="26" fill="#929A99" stroke="#555E60" stroke-width="5"/><circle cx="224" cy="296" r="9" fill="#30383B"/>
+ </g>
+ <g id="front-wheel">
+  <circle cx="620" cy="296" r="82" fill="#202527"/>
+  <circle cx="620" cy="296" r="78" stroke="url(#tread)" stroke-width="9"/>
+  <circle cx="620" cy="296" r="61" fill="#EBECE6" stroke="url(#metal)" stroke-width="8"/>
+  <g stroke="#929B9B" stroke-width="2"><path d="m620 236 0 120m-60-60h120m-102-42 84 84m-84 0 84-84m-98 19 112 46m-79-79 46 112m-46 0 46-112m-79 79 112-46"/></g>
+  <circle cx="620" cy="296" r="34" stroke="#879192" stroke-width="5"/>
+  <g fill="#737D7F"><circle cx="620" cy="270" r="3"/><circle cx="643" cy="283" r="3"/><circle cx="643" cy="310" r="3"/><circle cx="620" cy="322" r="3"/><circle cx="597" cy="310" r="3"/><circle cx="597" cy="283" r="3"/></g>
+  <circle cx="620" cy="296" r="9" fill="#30383B"/>
+ </g>
+ <path d="m225 295 119-90 78 94-197-4Z" stroke="#555E5F" stroke-width="12"/>
+ <path d="m272 185 64 3 98 110 82-91-49-53" stroke="#30383A" stroke-width="13"/>
+ <path d="m322 194 66 5 66 88" stroke="#6D7574" stroke-width="6"/>
+ <path d="m286 190-42 91" stroke="#BBC2BE" stroke-width="15"/>
+ <path d="m282 201-34 73" stroke="#353E40" stroke-width="8"/>
+ <path d="m282 206-10 3 6 8-12 3 6 8-12 3 6 8-12 3 6 8-12 3" stroke="#D5D9D3" stroke-width="5"/>
+ <path d="M166 225c27-30 80-41 117-13" stroke="#303739" stroke-width="12"/>
+ <path d="m168 221-17-25-25-3" stroke="#353D3F" stroke-width="6"/>
+ <path d="m133 194-2 21" stroke="#A13C29" stroke-width="10"/>
+ <path d="m151 212-7 34-27-6 6-30" fill="#D1D4CD"/>
+ <path d="M173 174h135l29 16-7 13H204l-29-12Z" fill="url(#black)"/>
+ <path d="M185 171h113c15 0 25 6 30 14H183c-8-3-10-10 2-14Z" fill="#4A5050"/>
+ <path d="m192 199 37 28h89l35-31" fill="#454C4B"/>
+ <path d="m229 207 67 0-9 12h-50Z" fill="#7E8986"/>
+ <path d="M322 185c15-33 42-59 79-60l69 18 19 38c-32 22-73 24-101 19l-66-15Z" fill="url(#tank)" stroke="#A8AEA6" stroke-width="2"/>
+ <path d="m337 176 39-28c28-9 55-7 91 5" stroke="#FAFAF5" stroke-width="3"/>
+ <path d="m355 182 88 7 36-14" stroke="#BC4A2C" stroke-width="9"/>
+ <path d="m394 123 27 2" stroke="#434B4D" stroke-width="7"/>
+ <path d="m490 166 61-16 14 43-47 18" fill="#323B3D"/>
+ <path d="m551 151 69 145" stroke="#414B4C" stroke-width="16"/>
+ <path d="m562 173 53 116" stroke="url(#metal)" stroke-width="8"/>
+ <path d="m541 160 60 135" stroke="#A4ADAA" stroke-width="7"/>
+ <path d="M552 226c27-28 74-28 106-2" stroke="#D4D6CD" stroke-width="10"/>
+ <path d="M568 137h24l11 29-27 6-11-26Z" fill="#DCE1D8" stroke="#475154" stroke-width="6"/>
+ <path d="m594 141 8 23" stroke="#FAFAF6" stroke-width="5"/>
+ <path d="m547 150-10-34-42-3-8-13" stroke="#333D3E" stroke-width="7"/>
+ <path d="m496 111-31-2" stroke="#1E292B" stroke-width="9"/>
+ <path d="m528 115-3-29 18-18" stroke="#596362" stroke-width="4"/>
+ <ellipse cx="553" cy="64" rx="21" ry="10" fill="#303A3D" transform="rotate(-12 553 64)"/>
+ <path d="m499 110-14-25-19-6" stroke="#596362" stroke-width="4"/>
+ <ellipse cx="454" cy="75" rx="18" ry="9" fill="#303A3D" transform="rotate(12 454 75)"/>
+ <path d="m570 179 12-3" stroke="#C36B33" stroke-width="8"/>
+ <path d="M381 208h58l17 55-61 4-21-33Z" fill="url(#metal)" stroke="#5D6768" stroke-width="3"/>
+ <g stroke="#525D5E" stroke-width="4"><path d="m384 218 52-2m-49 12 52-2m-49 12 52-2m-49 12 52-2"/></g>
+ <path d="M360 250h54l37 27-9 41h-72l-24-27Z" fill="#677374" stroke="#404D50" stroke-width="4"/>
+ <circle cx="389" cy="285" r="23" fill="url(#metal)" stroke="#454F51" stroke-width="3"/>
+ <circle cx="389" cy="285" r="7" fill="#8C9695"/>
+ <path d="m437 233 18 25-5 51-166 16" stroke="#6D7776" stroke-width="12"/>
+ <path d="m280 309-61 7-25 22 101-3 66-24" fill="url(#metal)" stroke="#788180" stroke-width="2"/>
+ <path d="m306 277-47 10-21 19" stroke="#253436" stroke-width="6"/>
+ <path d="m418 311-7 39h24" stroke="#4D5B5D" stroke-width="6"/>
+ <path d="m432 291 27-4" stroke="#303C3E" stroke-width="6"/>
+ <path d="m461 284 13 3" stroke="#283437" stroke-width="8"/>
+ <path d="m350 304-17 10" stroke="#303C3E" stroke-width="6"/>
+ <circle cx="224" cy="296" r="4" fill="#DADEDA"/><circle cx="620" cy="296" r="4" fill="#DADEDA"/>
+</g>
+</svg>
