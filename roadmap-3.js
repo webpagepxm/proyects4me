@@ -261,7 +261,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
         phase("arquitectura","Arquitectura y seguridad",15,[11,12],[["rls-real","Probar RLS y acceso entre organizaciones con cuentas autorizadas"],["auth-real","Verificar autenticación y permisos en entorno seguro"]],80),
         phase("operaciones","Eventos y operaciones",15,[0,1,2,3,4,10],[["recorridos","Validar recorridos de eventos, recurrencias, tareas y equipo con servicios de prueba"]],80),
         phase("finanzas","Finanzas",15,[5,6,7,8,9],[["fin-merge","Integrar correcciones de interpretación y contexto financiero"],["fin-backend","Comparar cifras, permisos y filtros con backend de prueba"]],85),
-        phase("calidad","Auditoría y calidad",15,[13,14],[["diff-final","Revisar diff de correcciones y compatibilidad con main"],["guardar-rama","Respaldar y conservar rama de correcciones"],["safari","Probar Safari/iPhone físico, teclado, zoom y formularios"],["regresion","Ejecutar regresión final después de integrar"]],90),
+        phase("calidad","Auditoría y calidad",15,[13,14],[["diff-final","Revisar diff de correcciones y compatibilidad con main"],["guardar-rama","Respaldar y conservar rama de correcciones"],["safari","Probar Safari/iPhone físico, teclado, zoom y formularios"],["regresion","Ejecutar regresión final después de integrar"],["qg-ci","Configurar Quality Gate: Playwright y CI que impida publicar con fallas críticas"],["qg-rls","Verificar permisos RLS entre organizadores y RPs en entorno de prueba"],["qg-backup","Probar respaldo y restauración sin afectar producción"],["qg-observe","Configurar alertas y plan de reversión para incidentes"]],90),
         phase("diseno","Rediseño UX/UI",15,[],[["tres-conceptos","Crear tres direcciones estéticas realmente diferentes"],["prototipos","Preparar prototipos de Home, Eventos y Finanzas para móvil y escritorio"],["aprobar-diseno","Elegir y aprobar una propuesta visual"],["implementar-diseno","Implementar estética aprobada sin perder funcionalidad"],["qa-visual","Validar coherencia y accesibilidad en móvil y escritorio"]],20),
         phase("ia","Asistente de IA / Groq",10,[],[["groq-actual","Verificar funcionamiento y permisos de la integración actual"],["acciones-seguras","Implementar herramientas autorizadas para leer y registrar operaciones"],["aclaraciones","Confirmar intenciones, fechas y eventos ambiguos"],["reuniones","Integrar reuniones, acuerdos, responsables y briefings"],["ia-test","Probar acciones y aislamiento de datos sin tocar producción"]],25),
         phase("whatsapp","WhatsApp, voz y automatizaciones",10,[],[["meta-test","Conectar WhatsApp Cloud API con número de prueba"],["voz","Transcribir audio con Groq Whisper"],["webhook","Validar webhook y registro autorizado en Supabase"],["confirmacion","Preparar confirmaciones y controles contra duplicados"],["recordatorios","Construir recordatorios y seguimiento autorizado"]],0),
@@ -277,7 +277,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
         phase("ordenes","Órdenes de servicio",20,[4,9],[["flujo","Validar diagnóstico, presupuesto, aprobación, reparación y entrega"],["estimado","Registrar fecha estimada sin inventarla"]]),
         phase("seguimiento","Seguimiento privado",20,[5,6,10],[["link-privado","Probar enlace seguro por orden y acceso del cliente"]]),
         phase("agenda","Agenda y WhatsApp",15,[],[["disponibilidad","Definir horarios, capacidad y prevención de choques"],["modalidad","Elegir agente que responde o agente que solo registra acuerdos"],["reservas","Probar solicitud, confirmación y registro seguro en Supabase"]]),
-        phase("seguridad","Seguridad y QA Android",10,[7,8,11],[["aislamiento","Probar que un cliente no pueda acceder a órdenes ajenas"]]),
+        phase("seguridad","Seguridad y QA Android",10,[7,8,11],[["aislamiento","Probar que un cliente no pueda acceder a órdenes ajenas"],["qg-flujo","Validar web → registro → folio → Ops → WhatsApp; solicitud no es cita confirmada"],["qg-regresion","Automatizar pruebas de orden, desglose y PDF con Playwright y CI"],["qg-rls","Auditar login, RLS, accesos y secretos"],["qg-backup","Comprobar respaldo, restauración y reversión"],["qg-android","Probar Android real y red intermitente"],["qg-alertas","Registrar errores, activar monitoreo y documentar soporte"]]),
         phase("impresion","Impresión y entrega",5,[12,13],[["compatibilidad","Comprobar impresora térmica y Android antes de comprar"]])
       ]
     },
@@ -287,8 +287,8 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
       allocation:20,phases:[
         phase("alcance","Alcance y consentimiento",15,[0],[["consent","Definir finalidad y consentimiento de datos por evento y organizador"]]),
         phase("landing","Landing y registros",20,[1],[["landing-movil","Validar landing móvil y formulario real"],["preferencias","Capturar estancia, visitante/local y preferencias con propósito claro"]]),
-        phase("rps","Promotores y QR",25,[2,3],[["qr-piloto","Probar QR identificable para cada RP"],["permisos","Comprobar acceso solo a registros propios"]]),
-        phase("operacion","Operación y asistencia",15,[4,5],[["registro","Verificar check-in y conteo sin interferir con venta presencial"]]),
+        phase("rps","Promotores y QR",25,[2,3],[["qr-piloto","Probar QR identificable para cada RP"],["permisos","Comprobar acceso solo a registros propios"],["qg-rp","Validar RLS y aislamiento por RP y organizador con usuarios de prueba"]]),
+        phase("operacion","Operación y asistencia",15,[4,5],[["registro","Verificar check-in y conteo sin interferir con venta presencial"],["qg-carga","Ejecutar pruebas de carga sobre registros y check-in sin saturar servicios externos"]]),
         phase("analitica","Análisis",10,[6,7],[["reporte-rp","Mostrar atribución por RP sin inventar resultados de ventas"]]),
         phase("denbou","Integración con Denbou",15,[8],[["vinculacion","Relacionar eventos y registros según permisos y titularidad"]])
       ]
@@ -308,7 +308,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
       phases:[
         phase("oferta","Oferta y posicionamiento",25,[0,1,6],[["paquetes","Definir landing, sistema operativo y agente como niveles separados"]]),
         phase("pilotos","Pilotos y portafolio",30,[3,4],[["resultados","Documentar resultados verificables de cada piloto"]]),
-        phase("seguridad","Modelo y seguridad",20,[2,5],[["aislamiento","Diseñar aislamiento de datos y permisos por cliente"]]),
+        phase("seguridad","Modelo y seguridad",20,[2,5],[["aislamiento","Diseñar aislamiento de datos y permisos por cliente"],["quality-gate","Documentar Quality Gate común: CI, seguridad, backups, monitoreo y revisión humana"]]),
         phase("inteligencia","Dirección creativa e inteligencia comercial",15,[],[["entrevista","Diseñar entrevista adaptativa para crear perfil de marca"],["campanas","Relacionar campañas, cupones, objetivos y métricas"]]),
         phase("plataforma","Componentes y SaaS",10,[],[["reuso","Extraer componentes reutilizables solo tras validar pilotos"]])
       ]
@@ -407,7 +407,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
   }
 
 
-  // ROADMAP_V4_INTEGRATED · 10 etapas y 56 tareas del tablero Callejero + Denbou.
+  // ROADMAP_V4_INTEGRATED · 10 etapas; tareas originales conservadas y Quality Gate agregado el 13/11/2026.
   // Estimaciones locales, separadas de los checklists técnicos existentes.
   const integratedStages=[
     ["core","Denbou · Eventos y operaciones",72,17,"La estructura operativa privada de Denise.",[["Crear, abrir y editar eventos",85],["Eventos recurrentes y excepciones",85],["Tareas y responsables por evento",75],["RPs y proveedores vinculados",65],["Validación de operaciones reales",25]]],
@@ -419,7 +419,7 @@ function dailyReport(){return '\\n\\nVIDA PERSONAL: desayuno, alimentos/despensa
     ["integrate","Integración Callejero ↔ Denbou",0,8,"Captación pública y operaciones privadas conectadas según consentimiento y propiedad de datos.",[["Vincular registros con eventos",0],["Relacionar leads con su RP",0],["Mostrar resultados por evento",0],["Segmentar intereses y estadía",0],["Probar accesos por organizador",0]]],
     ["ai","Asistente de inteligencia artificial",30,7,"IA para consultar, preparar acciones y disminuir carga mental sin inventar datos.",[["Interfaz de asistente privado",60],["Integración técnica de Groq",55],["Consultas seguras a datos operativos",35],["Preparación de reuniones y acuerdos",0],["Acciones escritas con autorización",0],["Memoria documental RAG",0]]],
     ["whatsapp","WhatsApp, voz y automatizaciones",0,6,"WhatsApp como interfaz futura y Denbou como centro de información.",[["WhatsApp Cloud API con número de prueba",0],["Webhook y verificación de mensajes",0],["Transcripción de notas de voz",0],["Crear tareas y citas desde mensajes autorizados",0],["Recordatorios y resumen diario",0],["Automatizaciones con n8n",0]]],
-    ["security","Seguridad, pruebas y entrega",45,3,"Proteger datos y comprobar uso completo desde iPhone.",[["Autenticación y estructura de permisos",65],["Pruebas automáticas y compilación",70],["Regresión de operaciones y finanzas",50],["Pruebas en iPhone físico",10],["Piloto real con Denise y RPs",0]]]
+    ["security","Seguridad, pruebas y entrega",45,3,"Quality Gate: proteger datos, probar flujos reales y asegurar recuperación antes de publicar.",[["Autenticación y estructura de permisos",65],["Pruebas automáticas y compilación",70],["Regresión de operaciones y finanzas",50],["Pruebas en iPhone físico",10],["Piloto real con Denise y RPs",0],["Quality Gate: permisos RLS entre organizadores y RPs",0],["Playwright + GitHub Actions en flujos críticos",0],["Respaldo y restauración comprobados",0],["Entornos separados y reversión verificada",0],["Monitoreo, alertas y gestión de incidentes",0],["Pruebas de carga k6 y validación móvil real",0]]]
   ].map(([id,name,p,w,desc,tasks])=>({id,name,p,w,desc,tasks}));
   if(!state.integratedDenbouProgress||typeof state.integratedDenbouProgress!=="object"||Array.isArray(state.integratedDenbouProgress))state.integratedDenbouProgress={};
   const integratedEdits=state.integratedDenbouProgress;
